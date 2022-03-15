@@ -4,6 +4,7 @@ import random
 
 from src.exceptions import BusyCell
 from src.store.color import Color
+from src.const import BOARD_SIZE
 
 
 def board_size(board: t.List[t.List[Color]]) -> int:
@@ -20,29 +21,22 @@ def board_is_empty(board: t.List[t.List[Color]]) -> bool:
     return True
 
 def turn_around(board: t.List[t.List[Color]], x: int, y: int, distance: int, color: Color) -> None:
-    board[x-distance][y] = color
-    board[x-distance][y-distance] = color
-    board[x][y-distance] = color
-    try:
-        board[x+distance][y-distance] = color
-    except IndexError:
-        pass
-    try:
+    if x >= distance:
+        board[x-distance][y] = color
+    if y >= distance:
+        board[x][y-distance] = color
+    if x >= distance and y >= distance:
+        board[x-distance][y-distance] = color
+    if y >= distance and x + distance <= BOARD_SIZE:
+            board[x+distance][y-distance] = color
+    if x + distance <= BOARD_SIZE:
         board[x+distance][y] = color
-    except IndexError:
-        pass
-    try:
+    if x + distance <= BOARD_SIZE and y + distance <= BOARD_SIZE:
         board[x+distance][y+distance] = color
-    except IndexError:
-        pass
-    try:
+    if y + distance <= BOARD_SIZE:
         board[x][y+distance] = color
-    except IndexError:
-        pass
-    try:
+    if x >= distance:
         board[x-distance][y+distance] = color
-    except IndexError:
-        pass
 
 
 class TestGomoku:
@@ -66,3 +60,70 @@ class TestGomoku:
         with pytest.raises(BusyCell) as error:
             new_gomoku.make_turn(x, y)
         assert error.value.args[0] == f'Cell ({x} : {y}) is busy'
+
+    def test_turn_around(self,
+                         new_gomoku):
+        x, y = 10, 10
+        turn_around(new_gomoku.board, x, y, 3, Color.BLACK)
+        assert new_gomoku.board[x][y] == Color.EMPTY
+        assert new_gomoku.board[x-3][y] == Color.BLACK
+        assert new_gomoku.board[x-3][y-3] == Color.BLACK
+        assert new_gomoku.board[x][y-3] == Color.BLACK
+        assert new_gomoku.board[x+3][y-3] == Color.BLACK
+        assert new_gomoku.board[x+3][y] == Color.BLACK
+        assert new_gomoku.board[x+3][y+3] == Color.BLACK
+        assert new_gomoku.board[x][y+3] == Color.BLACK
+        assert new_gomoku.board[x-3][y+3] == Color.BLACK
+
+        new_gomoku.reset_board()
+        x, y = 0, 0
+        turn_around(new_gomoku.board, x, y, 3, Color.WHITE)
+        assert new_gomoku.board[x - 3][y] == Color.EMPTY
+        assert new_gomoku.board[x - 3][y - 3] == Color.EMPTY
+        assert new_gomoku.board[x][y - 3] == Color.EMPTY
+        assert new_gomoku.board[x + 3][y - 3] == Color.EMPTY
+        assert new_gomoku.board[x + 3][y] == Color.WHITE
+        assert new_gomoku.board[x + 3][y + 3] == Color.WHITE
+        assert new_gomoku.board[x][y + 3] == Color.WHITE
+        assert new_gomoku.board[x - 3][y + 3] == Color.EMPTY
+
+    def test_correct_capture(self,
+                             new_gomoku):
+        x, y = 10, 10
+        turn_around(new_gomoku.board, x, y, 3, Color.WHITE)
+        turn_around(new_gomoku.board, x, y, 2, Color.BLACK)
+        turn_around(new_gomoku.board, x, y, 1, Color.BLACK)
+        assert new_gomoku.board[x - 2][y] == Color.BLACK
+        assert new_gomoku.board[x - 1][y] == Color.BLACK
+        assert new_gomoku.board[x - 2][y - 2] == Color.BLACK
+        assert new_gomoku.board[x - 1][y - 1] == Color.BLACK
+        assert new_gomoku.board[x][y - 2] == Color.BLACK
+        assert new_gomoku.board[x][y - 1] == Color.BLACK
+        assert new_gomoku.board[x + 2][y - 2] == Color.BLACK
+        assert new_gomoku.board[x + 1][y - 1] == Color.BLACK
+        assert new_gomoku.board[x + 2][y] == Color.BLACK
+        assert new_gomoku.board[x + 1][y] == Color.BLACK
+        assert new_gomoku.board[x + 2][y + 2] == Color.BLACK
+        assert new_gomoku.board[x + 1][y + 1] == Color.BLACK
+        assert new_gomoku.board[x][y + 2] == Color.BLACK
+        assert new_gomoku.board[x][y + 1] == Color.BLACK
+        assert new_gomoku.board[x - 2][y + 2] == Color.BLACK
+        assert new_gomoku.board[x - 1][y + 1] == Color.BLACK
+
+        new_gomoku.make_turn(x, y)
+        assert new_gomoku.board[x - 2][y] == Color.EMPTY
+        assert new_gomoku.board[x - 1][y] == Color.EMPTY
+        assert new_gomoku.board[x - 2][y - 2] == Color.EMPTY
+        assert new_gomoku.board[x - 1][y - 1] == Color.EMPTY
+        assert new_gomoku.board[x][y - 2] == Color.EMPTY
+        assert new_gomoku.board[x][y - 1] == Color.EMPTY
+        assert new_gomoku.board[x + 2][y - 2] == Color.EMPTY
+        assert new_gomoku.board[x + 1][y - 1] == Color.EMPTY
+        assert new_gomoku.board[x + 2][y] == Color.EMPTY
+        assert new_gomoku.board[x + 1][y] == Color.EMPTY
+        assert new_gomoku.board[x + 2][y + 2] == Color.EMPTY
+        assert new_gomoku.board[x + 1][y + 1] == Color.EMPTY
+        assert new_gomoku.board[x][y + 2] == Color.EMPTY
+        assert new_gomoku.board[x][y + 1] == Color.EMPTY
+        assert new_gomoku.board[x - 2][y + 2] == Color.EMPTY
+        assert new_gomoku.board[x - 1][y + 1] == Color.EMPTY

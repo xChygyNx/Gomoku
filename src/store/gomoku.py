@@ -5,10 +5,10 @@ from src.exceptions import (
     BusyCell,
 )
 from src.const import (
-    INITIAL_STATE_SCORE,
     CAPATURE_DISTANCE,
+    INITIAL_STATE_SCORE,
+    BOARD_SIZE,
 )
-
 
 class Gomoku:
     def __init__(self):
@@ -27,11 +27,11 @@ class Gomoku:
             raise BusyCell(x, y)
         color = self.now_turn if color is None else color
         self.board[x][y] = color
+        self.make_capture(x, y)
         if self.now_turn == Color.WHITE:
             self.now_turn = Color.BLACK
         else:
             self.now_turn = Color.WHITE
-        self.make_capture(x,y)
 
     def check_and_clear_horizontal(self, x: int, y: int) -> None:
         versa_color = Color.WHITE if self.now_turn == Color.BLACK else Color.BLACK
@@ -64,22 +64,22 @@ class Gomoku:
     def make_capture(self, x: int, y: int) -> None:
         if x - CAPATURE_DISTANCE >= 0 and self.board[x - CAPATURE_DISTANCE][y] == self.now_turn:
             self.check_and_clear_horizontal(x - CAPATURE_DISTANCE + 1, y)
-        if x + CAPATURE_DISTANCE <= 18 and self.board[x + CAPATURE_DISTANCE][y] == self.now_turn:
+        if x + CAPATURE_DISTANCE <= BOARD_SIZE and self.board[x + CAPATURE_DISTANCE][y] == self.now_turn:
             self.check_and_clear_horizontal(x + 1, y)
         if y - CAPATURE_DISTANCE >= 0 and self.board[x][y - CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_vertical(x, y - CAPATURE_DISTANCE + 1)
-        if y + CAPATURE_DISTANCE <= 18 and self.board[x][y + CAPATURE_DISTANCE] == self.now_turn:
+        if y + CAPATURE_DISTANCE <= BOARD_SIZE and self.board[x][y + CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_vertical(x, y + 1)
         if (x - CAPATURE_DISTANCE >= 0 and y - CAPATURE_DISTANCE >= 0) and \
             self.board[x-CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_1(x - CAPATURE_DISTANCE + 1, y - CAPATURE_DISTANCE + 1)
-        if (x + CAPATURE_DISTANCE <= 18 and y + CAPATURE_DISTANCE <= 18) and \
+        if (x + CAPATURE_DISTANCE <= BOARD_SIZE and y + CAPATURE_DISTANCE <= 18) and \
             self.board[x+CAPATURE_DISTANCE][y+CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_1(x + 1, y + 1)
         if (x - CAPATURE_DISTANCE >= 0 and y + CAPATURE_DISTANCE <= 18) and \
             self.board[x-CAPATURE_DISTANCE][y+CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x - CAPATURE_DISTANCE + 1, y + CAPATURE_DISTANCE - 1)
-        if (x + CAPATURE_DISTANCE <= 18 and y - CAPATURE_DISTANCE >= 0) and \
+        if (x + CAPATURE_DISTANCE <= BOARD_SIZE and y - CAPATURE_DISTANCE >= 0) and \
             self.board[x+CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x + 1, y - 1)
 
@@ -102,3 +102,8 @@ class Gomoku:
 
     def check_diagonal_2(self) -> int:
         pass
+
+    def reset_board(self) -> None:
+        for line in self.board:
+            for pos in line:
+                pos = Color.EMPTY
