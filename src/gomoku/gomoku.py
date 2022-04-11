@@ -1,6 +1,6 @@
 import typing as t
 
-from src.store.color import Color
+from src.gomoku.structures import Color, SequencesInfo
 from src.exceptions import (
     BusyCell,
 )
@@ -12,26 +12,15 @@ from src.const import (
 
 class Gomoku:
     def __init__(self, size: int = BOARD_SIZE):
-        self.size = size
+        self.board_size = size
         self._board = None
         self.now_turn = Color.WHITE
-        self.combination_score = {0: 0,
-                                  1: 1,
-                                  2: 10,
-                                  3: 100,
-                                  4: 1000,
-                                  5: float('inf')}
-        self.score_coef = {
-            Color.WHITE: 1,
-            Color.BLACK: -1,
-            Color.EMPTY: 0,
-        }
 
     @property
     def board(self) -> t.List[t.List[Color]]:
         if self._board is not None:
             return self._board
-        self._board = [[Color.EMPTY for _ in range(self.size)] for _ in range(self.size)]
+        self._board = [[Color.EMPTY for _ in range(self.board_size)] for _ in range(self.board_size)]
         return self._board
 
     def make_turn(self, x: int, y: int, color: Color = None) -> None:
@@ -76,27 +65,27 @@ class Gomoku:
     def make_capture(self, x: int, y: int) -> None:
         if x - CAPATURE_DISTANCE >= 0 and self.board[x - CAPATURE_DISTANCE][y] == self.now_turn:
             self.check_and_clear_horizontal(x - CAPATURE_DISTANCE + 1, y)
-        if x + CAPATURE_DISTANCE <= (self.size - 1) and self.board[x + CAPATURE_DISTANCE][y] == self.now_turn:
+        if x + CAPATURE_DISTANCE <= (self.board_size - 1) and self.board[x + CAPATURE_DISTANCE][y] == self.now_turn:
             self.check_and_clear_horizontal(x + 1, y)
         if y - CAPATURE_DISTANCE >= 0 and self.board[x][y - CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_vertical(x, y - CAPATURE_DISTANCE + 1)
-        if y + CAPATURE_DISTANCE <= (self.size - 1) and self.board[x][y + CAPATURE_DISTANCE] == self.now_turn:
+        if y + CAPATURE_DISTANCE <= (self.board_size - 1) and self.board[x][y + CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_vertical(x, y + 1)
         if (x - CAPATURE_DISTANCE >= 0 and y - CAPATURE_DISTANCE >= 0) and \
             self.board[x-CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_1(x - CAPATURE_DISTANCE + 1, y - CAPATURE_DISTANCE + 1)
-        if (x + CAPATURE_DISTANCE <= (self.size - 1) and y + CAPATURE_DISTANCE <= (self.size - 1)) and \
+        if (x + CAPATURE_DISTANCE <= (self.board_size - 1) and y + CAPATURE_DISTANCE <= (self.board_size - 1)) and \
             self.board[x+CAPATURE_DISTANCE][y+CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_1(x + 1, y + 1)
-        if (x - CAPATURE_DISTANCE >= 0 and y + CAPATURE_DISTANCE <= (self.size - 1)) and \
+        if (x - CAPATURE_DISTANCE >= 0 and y + CAPATURE_DISTANCE <= (self.board_size - 1)) and \
             self.board[x-CAPATURE_DISTANCE][y+CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x - CAPATURE_DISTANCE + 1, y + CAPATURE_DISTANCE - 1)
-        if (x + CAPATURE_DISTANCE <= (self.size - 1) and y - CAPATURE_DISTANCE >= 0) and \
+        if (x + CAPATURE_DISTANCE <= (self.board_size - 1) and y - CAPATURE_DISTANCE >= 0) and \
             self.board[x+CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x + 1, y - 1)
 
     def check_state(self):
-        acc_score = 0
+        acc_score = INITIAL_STATE_SCORE
         acc_score += self.check_horizontals()
         if -1 * float('inf') < acc_score < float('inf'):
             acc_score += self.check_verticals()
@@ -108,31 +97,54 @@ class Gomoku:
 
     def check_horizontals(self) -> int:
         acc = 0
-        seq = 0
-        now_seq = Color.EMPTY
+        seq_info = SequencesInfo()
         for line in self.board:
-            for pos in line:
-                if pos != now_seq:
-                    if now_seq != Color.EMPTY:
-                        acc += self.combination_score[seq] * self.score_coef[now_seq]
-                    now_seq = pos
-                    seq = 0
-                else:
-                    seq += 1
-                if seq == 5 and now_seq != Color.EMPTY:
-                    return self.combination_score[5] * self.score_coef[now_seq]
-        acc += self.combination_score[seq] * self.score_coef[now_seq]
+            seq_info.clear(pos_color=line[0])
+            for pos in range(len(line)):
+                acc += seq_info.count_score(pos, line[pos])
+            acc += seq_info.complete_line(self.board_size)
         return acc
 
 
     def check_verticals(self) -> int:
-        pass
+        acc = 0
+        seq_info = SequencesInfo()
+        for pos in range(self.board_size):
+            seq_info.clear(pos_color=self.board[0][pos])
+            for line in range(self.board_size):
+                acc += seq_info.count_score(line, self.board[line][pos])
+            acc += seq_info.complete_line(self.board_size)
+        return acc
 
     def check_diagonals_1(self) -> int:
-        pass
+        acc = 0
+        seq_info = SequencesInfo()
+        for init_v in range(4, self.board_size):
+            seq_info.clear(pos_color=self.board[0][init_v])
+            for h, v in zip(range(0, init_v), range(init_v, 0, -1)):
+                acc += seq_info.count_score(v, self.board[h][v])
+            acc += seq_info.complete_line(self.board_size)
+        for init_h in range(1, self.board_size - 4):
+            seq_info.clear(pos_color=self.board[init_h][self.board_size - 1])
+            for h, v in zip (range(init_h, self.board_size), range(self.board_size, init_h, -1)):
+                acc += seq_info.count_score(v, self.board[h][v])
+            acc += seq_info.complete_line(self.board_size)
+        return acc
 
     def check_diagonals_2(self) -> int:
-        pass
+        acc = 0
+        seq_info = SequencesInfo()
+        for init_h in range(self.board_size - 5, 0, -1):
+            seq_info.clear(pos_color=self.board[init_h][0])
+            for h, v in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
+                acc += seq_info.count_score(v, self.board[h][v])
+            acc += seq_info.complete_line(self.board_size)
+        for init_v in range(1, self.board_size - 4):
+            seq_info.clear(pos_color=self.board[0][init_v])
+            for h, v in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
+                acc += seq_info.count_score(v, self.board[h][v])
+            acc += seq_info.complete_line(self.board_size)
+        return acc
 
     def reset_board(self) -> None:
         for line in self.board:

@@ -1,11 +1,12 @@
 import pytest
 import typing as t
 import random
+from unittest.mock import patch, MagicMock
 
 from src.exceptions import BusyCell
-from src.store.color import Color
+from src.gomoku.structures import Color
 from src.const import BOARD_SIZE
-from src.store.gomoku import Gomoku
+from src.gomoku.gomoku import Gomoku
 
 
 def board_size(board: t.List[t.List[Color]]) -> int:
@@ -210,3 +211,111 @@ class TestGomoku:
         assert mini_gomoku.board[x][y + 1] == Color.BLACK
         assert mini_gomoku.board[x - 2][y + 2] == Color.WHITE
         assert mini_gomoku.board[x - 1][y + 1] == Color.BLACK
+
+    @patch('src.gomoku.gomoku.Gomoku.check_horizontals')
+    @patch('src.gomoku.gomoku.Gomoku.check_verticals')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
+    def test_check_for_horizontal_white_win(self,
+                                  check_diagonal2_mock: MagicMock,
+                                  check_diagonal1_mock: MagicMock,
+                                  check_verticals_mock: MagicMock,
+                                  check_horizontals_mock: MagicMock,
+                                  normal_gomoku):
+        check_horizontals_mock.return_value = float('inf')
+        normal_gomoku.check_state()
+        assert check_horizontals_mock.called
+        assert check_horizontals_mock.call_count == 1
+        assert not check_verticals_mock.called
+        assert not check_diagonal1_mock.called
+        assert not check_diagonal2_mock.called
+
+    @patch('src.gomoku.gomoku.Gomoku.check_horizontals')
+    @patch('src.gomoku.gomoku.Gomoku.check_verticals')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
+    def test_check_for_horizontal_black_win(self,
+                                  check_diagonal2_mock: MagicMock,
+                                  check_diagonal1_mock: MagicMock,
+                                  check_verticals_mock: MagicMock,
+                                  check_horizontals_mock: MagicMock,
+                                  normal_gomoku):
+        check_horizontals_mock.return_value = -1 * float('inf')
+        normal_gomoku.check_state()
+        assert check_horizontals_mock.called
+        assert check_horizontals_mock.call_count == 1
+        assert not check_verticals_mock.called
+        assert not check_diagonal1_mock.called
+        assert not check_diagonal2_mock.called
+
+    @patch('src.gomoku.gomoku.Gomoku.check_horizontals')
+    @patch('src.gomoku.gomoku.Gomoku.check_verticals')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
+    def test_check_for_vertical_white_win(self,
+                                  check_diagonal2_mock: MagicMock,
+                                  check_diagonal1_mock: MagicMock,
+                                  check_verticals_mock: MagicMock,
+                                  check_horizontals_mock: MagicMock,
+                                  normal_gomoku):
+        check_horizontals_mock.return_value = 5
+        check_verticals_mock.return_value = float('inf')
+        normal_gomoku.check_state()
+        assert check_horizontals_mock.called
+        assert check_horizontals_mock.call_count == 1
+        assert check_verticals_mock.called
+        assert check_verticals_mock.call_count == 1
+        assert not check_diagonal1_mock.called
+        assert not check_diagonal2_mock.called
+
+    @patch('src.gomoku.gomoku.Gomoku.check_horizontals')
+    @patch('src.gomoku.gomoku.Gomoku.check_verticals')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
+    @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
+    def test_check_for_vertical_black_win(self,
+                                  check_diagonal2_mock: MagicMock,
+                                  check_diagonal1_mock: MagicMock,
+                                  check_verticals_mock: MagicMock,
+                                  check_horizontals_mock: MagicMock,
+                                  normal_gomoku):
+        check_horizontals_mock.return_value = -5
+        check_verticals_mock.return_value = -1 * float('inf')
+        normal_gomoku.check_state()
+        assert check_horizontals_mock.called
+        assert check_horizontals_mock.call_count == 1
+        assert check_verticals_mock.called
+        assert check_verticals_mock.call_count == 1
+        assert not check_diagonal1_mock.called
+        assert not check_diagonal2_mock.called
+
+    def test_horizontal_white_win(self, normal_gomoku):
+        normal_gomoku.make_turn(x=5, y=5, color=Color.WHITE)
+        normal_gomoku.make_turn(x=5, y=6, color=Color.WHITE)
+        normal_gomoku.make_turn(x=5, y=7, color=Color.WHITE)
+        normal_gomoku.make_turn(x=5, y=8, color=Color.WHITE)
+        normal_gomoku.make_turn(x=5, y=9, color=Color.WHITE)
+        assert normal_gomoku.check_state() == float('inf')
+
+    def test_horizontal_black_win(self, normal_gomoku):
+        normal_gomoku.make_turn(x=5, y=5, color=Color.BLACK)
+        normal_gomoku.make_turn(x=5, y=6, color=Color.BLACK)
+        normal_gomoku.make_turn(x=5, y=7, color=Color.BLACK)
+        normal_gomoku.make_turn(x=5, y=8, color=Color.BLACK)
+        normal_gomoku.make_turn(x=5, y=9, color=Color.BLACK)
+        assert normal_gomoku.check_state() == -1 * float('inf')
+
+    def test_vertical_white_win(self, normal_gomoku):
+        normal_gomoku.make_turn(x=3, y=10, color=Color.WHITE)
+        normal_gomoku.make_turn(x=4, y=10, color=Color.WHITE)
+        normal_gomoku.make_turn(x=5, y=10, color=Color.WHITE)
+        normal_gomoku.make_turn(x=6, y=10, color=Color.WHITE)
+        normal_gomoku.make_turn(x=7, y=10, color=Color.WHITE)
+        assert normal_gomoku.check_state() == float('inf')
+
+    def test_vertical_black_win(self, normal_gomoku):
+        normal_gomoku.make_turn(x=3, y=10, color=Color.BLACK)
+        normal_gomoku.make_turn(x=4, y=10, color=Color.BLACK)
+        normal_gomoku.make_turn(x=5, y=10, color=Color.BLACK)
+        normal_gomoku.make_turn(x=6, y=10, color=Color.BLACK)
+        normal_gomoku.make_turn(x=7, y=10, color=Color.BLACK)
+        assert normal_gomoku.check_state() == -1 * float('inf')
