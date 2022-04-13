@@ -3,6 +3,8 @@ import typing as t
 from src.gomoku.structures import Color, SequencesInfo
 from src.exceptions import (
     BusyCell,
+    WhitePlayerWinException,
+    BlackPlayerWinException,
 )
 from src.const import (
     CAPATURE_DISTANCE,
@@ -15,6 +17,8 @@ class Gomoku:
         self.board_size = size
         self._board = None
         self.now_turn = Color.WHITE
+        self.white_capture = 0
+        self.black_capture = 0
 
     @property
     def board(self) -> t.List[t.List[Color]]:
@@ -38,6 +42,10 @@ class Gomoku:
         versa_color = Color.WHITE if self.now_turn == Color.BLACK else Color.BLACK
         if self.board[x][y] != versa_color or self.board[x+1][y] != versa_color:
             return
+        if self.now_turn == Color.BLACK:
+            self.black_capture += 2
+        else:
+            self.white_capture += 2
         self.board[x][y] = Color.EMPTY
         self.board[x+1][y] = Color.EMPTY
 
@@ -45,6 +53,10 @@ class Gomoku:
         versa_color = Color.WHITE if self.now_turn == Color.BLACK else Color.BLACK
         if self.board[x][y] != versa_color or self.board[x][y+1] != versa_color:
             return
+        if self.now_turn == Color.BLACK:
+            self.black_capture += 2
+        else:
+            self.white_capture += 2
         self.board[x][y] = Color.EMPTY
         self.board[x][y+1] = Color.EMPTY
 
@@ -52,6 +64,10 @@ class Gomoku:
         versa_color = Color.WHITE if self.now_turn == Color.BLACK else Color.BLACK
         if self.board[x][y] != versa_color or self.board[x+1][y+1] != versa_color:
             return
+        if self.now_turn == Color.BLACK:
+            self.black_capture += 2
+        else:
+            self.white_capture += 2
         self.board[x][y] = Color.EMPTY
         self.board[x+1][y+1] = Color.EMPTY
 
@@ -59,6 +75,10 @@ class Gomoku:
         versa_color = Color.WHITE if self.now_turn == Color.BLACK else Color.BLACK
         if self.board[x][y] != versa_color or self.board[x+1][y-1] != versa_color:
             return
+        if self.now_turn == Color.BLACK:
+            self.black_capture += 2
+        else:
+            self.white_capture += 2
         self.board[x][y] = Color.EMPTY
         self.board[x+1][y-1] = Color.EMPTY
 
@@ -83,6 +103,10 @@ class Gomoku:
         if (x + CAPATURE_DISTANCE <= (self.board_size - 1) and y - CAPATURE_DISTANCE >= 0) and \
             self.board[x+CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x + 1, y - 1)
+        if self.white_capture >= 10:
+            raise WhitePlayerWinException
+        elif self.black_capture >= 10:
+            raise BlackPlayerWinException
 
     def check_state(self):
         acc_score = INITIAL_STATE_SCORE
