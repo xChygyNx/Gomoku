@@ -3,7 +3,6 @@ import webbrowser as wb
 from game_config import GameConfig
 from constants import *
 from board import Board
-from info_panel import InfoPanel
 
 
 class GomokuGui:
@@ -114,14 +113,13 @@ class GomokuGui:
 
     def game(self, config):
         self._config = config
-        self._board = Board(self._root, config.get_board_size(), config.get_first_move())
-        self._info_panel = InfoPanel(self._root, self._config)
+        self._board = Board(self._root, config)
 
         for widget in self._root.winfo_children():
             widget.destroy()
 
         self._board.print_board()
-        self._info_panel.print_info()
+        self._board.print_info()
 
 
 if __name__ == '__main__':
