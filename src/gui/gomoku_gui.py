@@ -98,23 +98,23 @@ class GomokuGui:
         drop.config(font=('Arial', 15), bg=BOARD_COLOR)
         r2.place(relx=.5, rely=.65, anchor="center")
 
-        f_move = ttk.Label(frame, text='First move', font=('Arial', 15), bg=BACKGROUND_COLOR)
-        f_move.place(relx=.65, rely=.59, anchor="center")
+        color_l = ttk.Label(frame, text='Color', font=('Arial', 15), bg=BACKGROUND_COLOR)
+        color_l.place(relx=.65, rely=.59, anchor="center")
 
-        first = ttk.StringVar()
-        first.set("BLACK")
-        r1 = ttk.OptionMenu(frame, first, "BLACK", "WHITE")
+        color = ttk.StringVar()
+        color.set("BLACK")
+        r1 = ttk.OptionMenu(frame, color, "BLACK", "WHITE")
         r1.configure(font=('Arial', 15), width=8, height=1, bg=BUTTON_COLOR, bd=4, cursor="hand2")
         drop = self._root.nametowidget(r1.menuname)
         drop.config(font=('Arial', 15), bg=BOARD_COLOR)
         r1.place(relx=.65, rely=.65, anchor="center")
 
-        b1.configure(command=lambda: self.game(GameConfig.create("PvE", hard.get(), board_size.get(), first.get())))
-        b2.configure(command=lambda: self.game(GameConfig.create("PvP", hard.get(), board_size.get(), first.get())))
+        b1.configure(command=lambda: self.game(GameConfig.create("PvE", hard.get(), board_size.get(), color.get())))
+        b2.configure(command=lambda: self.game(GameConfig.create("PvP", hard.get(), board_size.get(), color.get())))
 
     def game(self, config):
         self._config = config
-        self._board = Board(self._root, config.get_board_size())
+        self._board = Board(self._root, config.get_board_size(), config.get_first_move())
         self._info_panel = InfoPanel(self._root, self._config)
 
         for widget in self._root.winfo_children():
