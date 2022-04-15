@@ -33,19 +33,19 @@ class GomokuGui:
 
         cright = ttk.Label(frame,
                            text='© 21 School, 2022',
-                           font=('Arial', 10),
+                           font=(FONT, COPYRIGHT_FONT_SIZE),
                            bg=BACKGROUND_COLOR)
         cright.place(relx=.5, rely=.97, anchor="center")
 
         welcome = ttk.Label(frame,
                             text='Welcome to Gomoku',
-                            font=('Arial', 20, "bold"),
+                            font=(FONT, LABEL_FONT_SIZE, "bold"),
                             bg=BACKGROUND_COLOR)
         welcome.place(relx=.5, rely=.1, anchor="center")
 
         game_rules = ttk.Label(frame,
                                text='Game rules',
-                               font=('Arial', 20, "underline", "bold"),
+                               font=(FONT, LABEL_FONT_SIZE, "underline", "bold"),
                                cursor="hand2",
                                bg=BACKGROUND_COLOR)
         game_rules.bind("<Button-1>", lambda e: wb.open_new("https://cdn.intra.42.fr/pdf/pdf/42138/en.subject.pdf"))
@@ -53,13 +53,13 @@ class GomokuGui:
 
         ch_mode = ttk.Label(frame,
                             text='Game mode:',
-                            font=('Arial', 20),
+                            font=LABEL_FONT,
                             bg=BACKGROUND_COLOR)
         ch_mode.place(relx=.5, rely=.3, anchor="center")
 
         b1 = ttk.Button(frame,
                         text="Player VS AI",
-                        font=('Arial', 15),
+                        font=BUTTON_FONT,
                         width=30, height=1,
                         bg=BUTTON_COLOR, highlightbackground=HIGHLIGHT_COLOR,
                         bd=4,
@@ -68,44 +68,50 @@ class GomokuGui:
 
         b2 = ttk.Button(frame,
                         text="Player VS Player",
-                        font=('Arial', 15),
+                        font=BUTTON_FONT,
                         width=30, height=1,
                         bg=BUTTON_COLOR,
                         bd=4,
                         cursor="hand2")
         b2.place(relx=.5, rely=.5, anchor="center")
 
-        diff = ttk.Label(frame, text='Difficult', font=('Arial', 15), bg=BACKGROUND_COLOR)
+        diff = ttk.Label(frame, text='Difficult', font=BUTTON_FONT, bg=BACKGROUND_COLOR)
         diff.place(relx=.35, rely=.59, anchor="center")
 
         hard = ttk.StringVar()
         hard.set("EASY")
         r1 = ttk.OptionMenu(frame, hard, "EASY", "MEDIUM", "HARD")
-        r1.configure(font=('Arial', 15), width=8, height=1, bg=BUTTON_COLOR, bd=4, cursor="hand2")
+        r1.configure(font=BUTTON_FONT,
+                     width=OPTION_MENU_WIDTH, height=OPTION_MENU_HEIGHT,
+                     bg=BUTTON_COLOR, bd=4, cursor="hand2")
         drop = self._root.nametowidget(r1.menuname)
-        drop.config(font=('Arial', 15), bg=BOARD_COLOR)
+        drop.config(font=BUTTON_FONT, bg=BOARD_COLOR)
         r1.place(relx=.35, rely=.65, anchor="center")
 
-        b_size = ttk.Label(frame, text='Board size', font=('Arial', 15), bg=BACKGROUND_COLOR)
+        b_size = ttk.Label(frame, text='Board size', font=BUTTON_FONT, bg=BACKGROUND_COLOR)
         b_size.place(relx=.5, rely=.59, anchor="center")
 
         board_size = ttk.StringVar()
         board_size.set("19 x 19")
         r2 = ttk.OptionMenu(frame, board_size, "15 x 15", "19 x 19")
-        r2.configure(font=('Arial', 15), width=8, height=1, bg=BUTTON_COLOR, bd=4, cursor="hand2")
+        r2.configure(font=BUTTON_FONT,
+                     width=OPTION_MENU_WIDTH, height=OPTION_MENU_HEIGHT,
+                     bg=BUTTON_COLOR, bd=4, cursor="hand2")
         drop = self._root.nametowidget(r2.menuname)
-        drop.config(font=('Arial', 15), bg=BOARD_COLOR)
+        drop.config(font=BUTTON_FONT, bg=BOARD_COLOR)
         r2.place(relx=.5, rely=.65, anchor="center")
 
-        color_l = ttk.Label(frame, text='Color', font=('Arial', 15), bg=BACKGROUND_COLOR)
+        color_l = ttk.Label(frame, text='Color', font=BUTTON_FONT, bg=BACKGROUND_COLOR)
         color_l.place(relx=.65, rely=.59, anchor="center")
 
         color = ttk.StringVar()
         color.set("BLACK")
         r1 = ttk.OptionMenu(frame, color, "BLACK", "WHITE")
-        r1.configure(font=('Arial', 15), width=8, height=1, bg=BUTTON_COLOR, bd=4, cursor="hand2")
+        r1.configure(font=BUTTON_FONT,
+                     width=OPTION_MENU_WIDTH, height=OPTION_MENU_HEIGHT,
+                     bg=BUTTON_COLOR, bd=4, cursor="hand2")
         drop = self._root.nametowidget(r1.menuname)
-        drop.config(font=('Arial', 15), bg=BOARD_COLOR)
+        drop.config(font=BUTTON_FONT, bg=BOARD_COLOR)
         r1.place(relx=.65, rely=.65, anchor="center")
 
         b1.configure(command=lambda: self.game(GameConfig.create("PvE", hard.get(), board_size.get(), color.get())))

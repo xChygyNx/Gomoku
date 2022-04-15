@@ -1,5 +1,5 @@
 import tkinter as ttk
-from constants import BACKGROUND_COLOR, BOARD_COLOR, PAD_FROM_WIN
+from constants import *
 from player import Player
 from piece import Piece
 
@@ -82,29 +82,28 @@ class Board:
 
         info_l = ttk.Label(self._info_frame,
                            text='INFO',
-                           font=('Arial', 20, "bold"),
+                           font=(LABEL_FONT, LABEL_FONT_SIZE, "bold"),
                            bg=BOARD_COLOR)
         info_l.place(relx=.5, rely=.05, anchor="center")
 
-        font = ('Arial', 20)
-        font_u = ('Arial', 20, "underline")
+        font_u = [LABEL_FONT, LABEL_FONT_SIZE, "underline"]
 
         mode_l = ttk.Label(self._info_frame, text='Mode:', font=font_u, bg=BOARD_COLOR)
         mode_l.place(relx=.1, rely=.2, anchor="w")
 
-        mode = ttk.Label(self._info_frame, text=self._config.get_mode(), font=font, bg=BOARD_COLOR)
+        mode = ttk.Label(self._info_frame, text=self._config.get_mode(), font=LABEL_FONT, bg=BOARD_COLOR)
         mode.place(relx=.7, rely=.2, anchor="center")
 
         turn_l = ttk.Label(self._info_frame, text='Turn:', font=font_u, bg=BOARD_COLOR)
         turn_l.place(relx=.1, rely=.35, anchor="w")
 
-        turn = ttk.Label(self._info_frame, textvariable=self._turn, font=font, bg=BOARD_COLOR)
+        turn = ttk.Label(self._info_frame, textvariable=self._turn, font=LABEL_FONT, bg=BOARD_COLOR)
         turn.place(relx=.7, rely=.35, anchor="center")
 
         moves_l = ttk.Label(self._info_frame, text='Moves:', font=font_u, bg=BOARD_COLOR)
         moves_l.place(relx=.1, rely=.5, anchor="w")
 
-        moves = ttk.Label(self._info_frame, textvariable=self._moves, font=font, bg=BOARD_COLOR)
+        moves = ttk.Label(self._info_frame, textvariable=self._moves, font=LABEL_FONT, bg=BOARD_COLOR)
         moves.place(relx=.7, rely=.5, anchor="center")
 
         catches_l = ttk.Label(self._info_frame, text='Catches:', font=font_u, bg=BOARD_COLOR)
