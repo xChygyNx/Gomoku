@@ -1,4 +1,5 @@
 import tkinter as ttk
+import json
 from constants import *
 from player import Player
 from piece import Piece
@@ -6,7 +7,7 @@ from piece import Piece
 
 class Board:
 
-    def __init__(self, win, config):
+    def __init__(self, win, config, send_func):
         self._win = win
         self._config = config
 
@@ -14,6 +15,7 @@ class Board:
         self._board_width = win.winfo_height() - PAD_FROM_WIN
         self._padding = 50
         self._cell_width = (self._board_width - 2 * self._padding) / self._config.get_board_size()
+        self._piece_radius = round(self._cell_width / 3)
         self._board_frame = None
         self._board_canvas = None
 
@@ -28,6 +30,8 @@ class Board:
         self._p2 = None
         self._cur_player = None
         self._pieces = []
+
+        self._send_func = send_func
 
     def print_board(self):
         """Initialize game board"""
@@ -63,7 +67,7 @@ class Board:
             self._board_canvas.create_text(padding + cell_width * n, padding / 2, text=chr(97 + n))
             self._board_canvas.create_text(padding + cell_width * n, width - padding / 2, text=chr(97 + n))
 
-        self._board_canvas.bind('<Button-1>', self.set_piece)
+        self._board_canvas.bind('<Button-1>', self.set_piece_on_event)
 
     def print_info(self):
         """Initialize info panel"""
@@ -82,11 +86,11 @@ class Board:
 
         info_l = ttk.Label(self._info_frame,
                            text='INFO',
-                           font=(LABEL_FONT, LABEL_FONT_SIZE, "bold"),
+                           font=(FONT, LABEL_FONT_SIZE, "bold"),
                            bg=BOARD_COLOR)
         info_l.place(relx=.5, rely=.05, anchor="center")
 
-        font_u = [LABEL_FONT, LABEL_FONT_SIZE, "underline"]
+        font_u = [FONT, LABEL_FONT_SIZE, "underline"]
 
         mode_l = ttk.Label(self._info_frame, text='Mode:', font=font_u, bg=BOARD_COLOR)
         mode_l.place(relx=.1, rely=.2, anchor="w")
@@ -125,7 +129,7 @@ class Board:
         self._p1.place(rel_y=.78)
         self._p2.place(rel_y=.88)
 
-    def set_piece(self, event):
+    def set_piece_on_event(self, event):
         """Event on-click on board to set Piece"""
         x = Board.round_cell(event.x - self._padding, self._cell_width) + self._padding
         y = Board.round_cell(event.y - self._padding, self._cell_width) + self._padding
@@ -137,10 +141,10 @@ class Board:
                        str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
 
             if position not in self._pieces:
-                p = Board.create_circle(self._board_canvas, x, y, 12, fill=self._cur_player.get_color())
+                p = Board.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
+                self._send_func(action="set", msg=position)
                 self.next()
-                print(f"{self._cur_player.get_color()} piece set on {position}")
 
     def switch_player(self):
         if self._cur_player == self._p1:
@@ -158,12 +162,35 @@ class Board:
             self._board_canvas.delete(p.get_piece())
             self.switch_player()
             self._moves.set(self._moves.get() - 1)
+            self._send_func(action="delete", msg=p.get_pos())
 
     def next(self, catch=False):
         if catch:
             self._cur_player.catch()
         self._moves.set(self._moves.get() + 1)
         self.switch_player()
+
+    def set_piece_by_position(self, position):
+
+        if position not in self._pieces:
+            column = ord(position[0]) - 97
+            row = self._config.get_board_size() + 1 - int(position[1:len(position)])
+
+            x = self._padding + self._cell_width * column
+            y = self._padding + self._cell_width * row
+
+            if self._padding / 2 < x < self._board_width - self._padding / 2 and \
+                    self._padding / 2 < y < self._board_width - self._padding / 2:
+                p = Board.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
+                self._pieces.append(Piece(p, position, self._cur_player.get_color()))
+                self._send_func(action="set", msg=position)
+                self.next()
+
+    def get_cur_player_name(self):
+        return self._cur_player.get_name()
+
+    def get_info_frame_rel_x(self):
+        return self._info_frame.place_info()['relx']
 
     @staticmethod
     def create_circle(canvas, x, y, r, **kwargs):
@@ -172,3 +199,16 @@ class Board:
     @staticmethod
     def round_cell(x, base):
         return base * round(x / base)
+
+    def to_json(self):
+        return json.dumps(self.__dict__())
+
+    def __dict__(self):
+        return {
+            "size": self._config.get_board_size(),
+            "turn": self._turn.get(),
+            "moves": self._moves.get(),
+            "current_player": self._cur_player.get_name(),
+            "players": [self._p1.__dict__(), self._p2.__dict__()],
+            "pieces": [p.__dict__() for p in self._pieces]
+        }

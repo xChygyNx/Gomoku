@@ -20,7 +20,7 @@ elif platform == "linux":
     WIN_WIDTH = 1200
     PAD_FROM_WIN = 35
 
-    FONT = "Arial"
+    FONT = "Bitstream Charter" # "DejaVu Sans Mono"
     BUTTON_FONT_SIZE = 15
     LABEL_FONT_SIZE = 20
     COPYRIGHT_FONT_SIZE = 10

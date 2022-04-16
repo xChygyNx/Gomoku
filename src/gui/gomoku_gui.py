@@ -1,3 +1,4 @@
+import json
 import tkinter as ttk
 import webbrowser as wb
 from game_config import GameConfig
@@ -15,15 +16,18 @@ class GomokuGui:
         self._root.config(bg=BACKGROUND_COLOR)
         self._root.update()
 
-        self._info_panel = None
-        self._board = None
         self._config = None
+        self._board = None
+        self._info_panel = None
+
+        self._client = None
 
     def start(self):
-        self.__welcome__()
+        self.print_config()
         self._root.mainloop()
 
-    def __welcome__(self):
+    def print_config(self):
+        """Initialize Config menu and create game"""
         frame = ttk.Frame(self._root,
                           width=self._root.winfo_width(),
                           height=self._root.winfo_height(),
@@ -31,11 +35,11 @@ class GomokuGui:
         frame.pack()
         frame.place(relx=.5, rely=.5, anchor="center")
 
-        cright = ttk.Label(frame,
-                           text='© 21 School, 2022',
-                           font=(FONT, COPYRIGHT_FONT_SIZE),
-                           bg=BACKGROUND_COLOR)
-        cright.place(relx=.5, rely=.97, anchor="center")
+        copy_right = ttk.Label(frame,
+                               text='© 21 School, 2022',
+                               font=(FONT, COPYRIGHT_FONT_SIZE),
+                               bg=BACKGROUND_COLOR)
+        copy_right.place(relx=.5, rely=.97, anchor="center")
 
         welcome = ttk.Label(frame,
                             text='Welcome to Gomoku',
@@ -61,7 +65,7 @@ class GomokuGui:
                         text="Player VS AI",
                         font=BUTTON_FONT,
                         width=30, height=1,
-                        bg=BUTTON_COLOR, highlightbackground=HIGHLIGHT_COLOR,
+                        bg=BUTTON_COLOR,
                         bd=4,
                         cursor="hand2")
         b1.place(relx=.5, rely=.4, anchor="center")
@@ -114,20 +118,60 @@ class GomokuGui:
         drop.config(font=BUTTON_FONT, bg=BOARD_COLOR)
         r1.place(relx=.65, rely=.65, anchor="center")
 
-        b1.configure(command=lambda: self.game(GameConfig.create("PvE", hard.get(), board_size.get(), color.get())))
-        b2.configure(command=lambda: self.game(GameConfig.create("PvP", hard.get(), board_size.get(), color.get())))
+        b1.configure(command=lambda: self.start_game(
+            GameConfig.create("PvE", hard.get(), board_size.get(), color.get())))
+        b2.configure(command=lambda: self.start_game(
+            GameConfig.create("PvP", hard.get(), board_size.get(), color.get())))
 
-    def game(self, config):
+    def start_game(self, config):
         self._config = config
-        self._board = Board(self._root, config)
 
         for widget in self._root.winfo_children():
             widget.destroy()
 
+        self._board = Board(self._root, config, self.send_action())
         self._board.print_board()
         self._board.print_info()
 
+        back = ttk.Button(self._root, text="Back",
+                          font=BUTTON_FONT,
+                          width=20, height=1,
+                          bg=BUTTON_COLOR, bd=4,
+                          cursor="hand2")
+        back.configure(command=self._board.back)
+        back.place(relx=self._board.get_info_frame_rel_x(), rely=.7, anchor="center")
+
+        back = ttk.Button(self._root, text="Restart",
+                          font=BUTTON_FONT,
+                          width=20, height=1,
+                          bg=BUTTON_COLOR, bd=4,
+                          cursor="hand2")
+        back.configure(command=self.restart_game)
+        back.place(relx=self._board.get_info_frame_rel_x(), rely=.95, anchor="center")
+
+    def restart_game(self):
+        for widget in self._root.winfo_children():
+            widget.destroy()
+        self.print_config()
+
+    def print_winner(self):
+        winner = ttk.Label(self._root,
+                           text=f"{self._board.get_cur_player_name()} WINS",
+                           font=(FONT, LABEL_FONT_SIZE, "bold"),
+                           bg=BACKGROUND_COLOR)
+        winner.place(relx=self._board.get_info_frame_rel_x(), rely=.825, anchor="center")
+
+    def send_action(self):
+        """Send player action to server"""
+        def send(action, msg):
+            res = {
+                "action": action,
+                "position": msg
+            }
+            print(f"Client send message: {json.dumps(res)}")
+        return send
+
 
 if __name__ == '__main__':
-    gui = GomokuGui(1200, 800)
+    gui = GomokuGui(WIN_WIDTH, WIN_HEIGHT)
     gui.start()
