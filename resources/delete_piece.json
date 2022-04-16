@@ -1,0 +1,11 @@
+{
+  "title": "delete",
+  "message": {
+    "player": {
+      "name": "AI easy",
+      "color": "white",
+      "catches": 0
+    },
+    "position": "n7"
+  }
+}

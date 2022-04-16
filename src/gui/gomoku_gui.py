@@ -129,9 +129,10 @@ class GomokuGui:
         for widget in self._root.winfo_children():
             widget.destroy()
 
-        self._board = Board(self._root, config, self.send_action())
+        self._board = Board(self._root, config, self.__send_message_from_board__())
         self._board.print_board()
         self._board.print_info()
+        self.send_message(title="start", message=self._config.__dict__)
 
         back = ttk.Button(self._root, text="Back",
                           font=BUTTON_FONT,
@@ -153,6 +154,7 @@ class GomokuGui:
         for widget in self._root.winfo_children():
             widget.destroy()
         self.print_config()
+        self.send_message(title="stop", message=dict())
 
     def print_winner(self):
         winner = ttk.Label(self._root,
@@ -161,15 +163,23 @@ class GomokuGui:
                            bg=BACKGROUND_COLOR)
         winner.place(relx=self._board.get_info_frame_rel_x(), rely=.825, anchor="center")
 
-    def send_action(self):
+    def __send_message_from_board__(self):
         """Send player action to server"""
-        def send(action, msg):
+        def send(title, message: dict):
             res = {
-                "action": action,
-                "position": msg
+                "title": title,
+                "message": message
             }
             print(f"Client send message: {json.dumps(res)}")
         return send
+
+    def send_message(self, title, message: dict):
+        """Send player action to server """
+        res = {
+            "title": title,
+            "message": message
+        }
+        print(f"Client send message: {json.dumps(res)}")
 
 
 if __name__ == '__main__':

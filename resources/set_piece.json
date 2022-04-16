@@ -1,0 +1,11 @@
+{
+  "title": "set",
+  "message": {
+    "player": {
+      "name": "Player",
+      "color": "black",
+      "catches": 0
+    },
+    "position": "m12"
+  }
+}

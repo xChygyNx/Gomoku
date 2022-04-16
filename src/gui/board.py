@@ -143,7 +143,7 @@ class Board:
             if position not in self._pieces:
                 p = Board.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
-                self._send_func(action="set", msg=position)
+                self.send_set_action(position)
                 self.next()
 
     def switch_player(self):
@@ -162,7 +162,7 @@ class Board:
             self._board_canvas.delete(p.get_piece())
             self.switch_player()
             self._moves.set(self._moves.get() - 1)
-            self._send_func(action="delete", msg=p.get_pos())
+            self.send_delete_action(p.get_pos())
 
     def next(self, catch=False):
         if catch:
@@ -183,8 +183,22 @@ class Board:
                     self._padding / 2 < y < self._board_width - self._padding / 2:
                 p = Board.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
-                self._send_func(action="set", msg=position)
+                self.send_set_action(position)
                 self.next()
+
+    def send_set_action(self, position):
+        message = {
+            "player": self._cur_player.__dict__(),
+            "position": position
+        }
+        self._send_func(title="set", message=message)
+
+    def send_delete_action(self, position):
+        message = {
+            "player": self._cur_player.__dict__(),
+            "position": position
+        }
+        self._send_func(title="delete", message=message)
 
     def get_cur_player_name(self):
         return self._cur_player.get_name()
