@@ -14,7 +14,7 @@ from src.const import (
 
 class Gomoku:
     def __init__(self, **kwargs):
-        self.board_size = kwargs.get('size')
+        self.board_size = kwargs.get('board_size')
         self.mode = kwargs.get('mode')
         self.player_color = kwargs.get('player_color')
         self._board = kwargs.get('None')
@@ -29,7 +29,14 @@ class Gomoku:
         self._board = [[Color.EMPTY for _ in range(self.board_size)] for _ in range(self.board_size)]
         return self._board
 
-    def make_turn(self, x: int, y: int, color: Color = None) -> None:
+    def make_turn(self, position: str, player_color: str) -> None:
+        x, y = position[:1], int(position[1:]) - 1
+        x = ord(x) - ord('a')
+        color = Color.__getattr__(player_color.upper())
+        self._make_turn(x, y, color)
+
+
+    def _make_turn(self, x: int, y: int, color: Color = None) -> None:
         if self.board[x][y] != Color.EMPTY:
             raise BusyCell(x, y)
         color = self.now_turn if color is None else color
