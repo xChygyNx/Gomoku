@@ -29,17 +29,14 @@ class Server:
 
     def get_data(self) -> t.Generator:
         while True:
-            send_data = ''
-            while True:
-                data = self.connection.recv(1024).decode("utf8")
-                send_data += data
-                if not data:
-                    break
-            send_data = json.loads(send_data)
-            if send_data.get('title') == 'end_game':
-                print(send_data.get('message'))
-                raise StopIteration
-            yield send_data
+            data = self.connection.recv(1024).decode("utf8")
+            data = json.loads(data)
+            if data.get('title') == 'end_game':
+                self.connection.send(json.dumps(data.get('message')).encode('utf8'))
+                break
+            else:
+                self.connection.send('ok'.encode('utf8'))
+                yield data
 
     def listen_connection(self):
         for message in self.get_data():
