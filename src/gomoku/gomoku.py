@@ -1,11 +1,7 @@
 import typing as t
 
 from src.gomoku.structures import Color, SequencesInfo
-from src.exceptions import (
-    BusyCell,
-    WhitePlayerWinException,
-    BlackPlayerWinException,
-)
+from src.exceptions import *
 from src.const import (
     CAPATURE_DISTANCE,
     INITIAL_STATE_SCORE,
@@ -17,10 +13,22 @@ class Gomoku:
         self.board_size = kwargs.get('board_size')
         self.mode = kwargs.get('mode')
         self.player_color = kwargs.get('player_color')
-        self._board = kwargs.get('None')
+        self.difficult = kwargs.get('difficult')
+        self._board = None
         self.now_turn = Color.WHITE
         self.white_capture = 0
         self.black_capture = 0
+        self.check_init()
+
+    def check_init(self):
+        if self.board_size is None:
+            raise ConfigGomokuError('Board_size of Gomoku is unfilled')
+        if self.mode not in ['PvE', 'PvP']:
+            raise ConfigGomokuError('Game mode not correct')
+        if self.mode == 'PvE' and self.player_color not in ['black', 'white']:
+            raise ConfigGomokuError('Color of player for PvE mode is not correct')
+        if self.mode == 'PvE' and self.difficult not in ['easy', 'medium', 'hard']:
+            raise ConfigGomokuError('Difficult of AI player for PvE mode is not correct')
 
     @property
     def board(self) -> t.List[t.List[Color]]:
@@ -29,10 +37,17 @@ class Gomoku:
         self._board = [[Color.EMPTY for _ in range(self.board_size)] for _ in range(self.board_size)]
         return self._board
 
-    def make_turn(self, position: str, player_color: str) -> None:
+    def win_by_capture(self) -> None:
+        if self.white_capture >= 10:
+            raise WhitePlayerWinException
+        elif self.black_capture >= 10:
+            raise BlackPlayerWinException
+
+    def make_turn(self, position: str, color: str=None) -> None:
         x, y = position[:1], int(position[1:]) - 1
         x = ord(x) - ord('a')
-        color = Color.__getattr__(player_color.upper())
+        if color is not None:
+            color = Color.__getattr__(color.upper())
         self._make_turn(x, y, color)
 
 
@@ -112,10 +127,7 @@ class Gomoku:
         if (x + CAPATURE_DISTANCE <= (self.board_size - 1) and y - CAPATURE_DISTANCE >= 0) and \
             self.board[x+CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x + 1, y - 1)
-        if self.white_capture >= 10:
-            raise WhitePlayerWinException
-        elif self.black_capture >= 10:
-            raise BlackPlayerWinException
+        self.win_by_capture()
 
     def check_state(self):
         acc_score = INITIAL_STATE_SCORE

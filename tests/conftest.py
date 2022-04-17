@@ -5,11 +5,11 @@ from src.gomoku.structures import SequencesInfo
 
 @fixture(scope='function')
 def mini_gomoku():
-    yield Gomoku(size=7)
+    yield Gomoku(board_size=7, mode='PvP')
 
 @fixture(scope='function')
 def normal_gomoku():
-    yield Gomoku(size=19)
+    yield Gomoku(board_size=19, mode='PvP')
 
 @fixture(scope='function')
 def seq_info():
