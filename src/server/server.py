@@ -3,6 +3,7 @@ import typing as t
 import dotenv
 import socket
 import json
+from src.gomoku import Gomoku
 
 
 dotenv.load_dotenv()
@@ -13,6 +14,7 @@ class Server:
         self._socket = None
         self.connection = None
         self.address = None
+        self.gomoku: Gomoku = None
 
     @property
     def socket(self):
@@ -31,11 +33,16 @@ class Server:
         while True:
             data = self.connection.recv(1024).decode("utf8")
             data = json.loads(data)
-            if data.get('title') == 'end_game':
+            if data.get('title') == 'start':
+                self.gomoku = Gomoku(**data.get('message'))
+                self.connection.send('ok'.encode('utf8'))
+            elif data.get('title') == 'end_game':
                 self.connection.send(json.dumps(data.get('message')).encode('utf8'))
                 break
             else:
                 self.connection.send('ok'.encode('utf8'))
+                method = self.gomoku.__getattribute__(data.get('title'))
+                method(**data.get('message'))
                 yield data
 
     def listen_connection(self):

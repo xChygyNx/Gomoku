@@ -5,7 +5,7 @@ import json
 import time
 
 
-RESOURCES = os.path.join(os.getcwd(), "resources")
+RESOURCES = os.path.join(os.getcwd(), "resources", "methods")
 
 messages = {
     'msg1': {
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection.connect((socket.gethostbyname('127.0.0.1'), int(os.environ['PORT'])))
     try:
-        for file in os.listdir(f'{RESOURCES}'):
+        for file in sorted(os.listdir(f'{RESOURCES}')):
             with open(os.path.join(RESOURCES, file), 'r') as f:
                 data = json.loads(f.read())
                 print(f'Dumps {json.dumps(data)}')

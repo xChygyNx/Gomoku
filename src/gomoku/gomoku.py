@@ -13,9 +13,11 @@ from src.const import (
 )
 
 class Gomoku:
-    def __init__(self, size: int = BOARD_SIZE):
-        self.board_size = size
-        self._board = None
+    def __init__(self, **kwargs):
+        self.board_size = kwargs.get('size')
+        self.mode = kwargs.get('mode')
+        self.player_color = kwargs.get('player_color')
+        self._board = kwargs.get('None')
         self.now_turn = Color.WHITE
         self.white_capture = 0
         self.black_capture = 0

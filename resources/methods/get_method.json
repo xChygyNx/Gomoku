@@ -1,0 +1,7 @@
+{
+  "title": "make_turn",
+  "message": {
+    "player_color": "white",
+    "position": "n7"
+  }
+}
