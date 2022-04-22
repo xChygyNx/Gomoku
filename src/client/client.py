@@ -16,21 +16,6 @@ dotenv.load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-messages = {
-    'msg1': {
-        'a': 1,
-        'b': 2,
-        'c': 3,
-    },
-    'msg2': {
-        'message': 'a' * 10000
-    },
-    'msg3': {
-        'title': 'end_game',
-        'message': 'White Player Win'
-    }
-}
-
 
 class Client:
     def __init__(self):
