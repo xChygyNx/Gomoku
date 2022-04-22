@@ -31,16 +31,16 @@ class Server:
 
     def get_data(self) -> t.Generator:
         while True:
-            data = self.connection.recv(1024).decode("utf8")
+            data = self.connection.recv(os.environ['SERVER_BATCH_SIZE']).decode(os.environ['SERVER_ENCODING'])
             data = json.loads(data)
             if data.get('title') == 'start':
                 self.gomoku = Gomoku(**data.get('message'))
-                self.connection.send('ok'.encode('utf8'))
+                self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
             elif data.get('title') == 'end_game':
-                self.connection.send(json.dumps(data.get('message')).encode('utf8'))
+                self.connection.send(json.dumps(data.get('message')).encode(os.environ['SERVER_ENCODING']))
                 break
             else:
-                self.connection.send('ok'.encode('utf8'))
+                self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
                 method = self.gomoku.__getattribute__(data.get('title'))
                 method(**data.get('message'))
                 yield data
