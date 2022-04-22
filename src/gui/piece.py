@@ -1,5 +1,3 @@
-import json
-
 
 class Piece:
 
@@ -24,12 +22,3 @@ class Piece:
 
     def __str__(self):
         return f"{self._pos}: {self._color}"
-
-    def to_json(self):
-        return json.dumps(self.__dict__())
-
-    def __dict__(self):
-        return {
-            "position": self._pos,
-            "color": self._color
-        }

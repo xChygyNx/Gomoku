@@ -31,7 +31,7 @@ class Server:
 
     def get_data(self) -> t.Generator:
         while True:
-            data = self.connection.recv(os.environ['SERVER_BATCH_SIZE']).decode(os.environ['SERVER_ENCODING'])
+            data = self.connection.recv(int(os.environ['SERVER_BATCH_SIZE'])).decode(os.environ['SERVER_ENCODING'])
             data = json.loads(data)
             if data.get('title') == 'start':
                 self.gomoku = Gomoku(**data.get('message'))

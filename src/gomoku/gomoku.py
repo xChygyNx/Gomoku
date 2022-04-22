@@ -25,9 +25,9 @@ class Gomoku:
             raise ConfigGomokuError('Board_size of Gomoku is unfilled')
         if self.mode not in ['PvE', 'PvP']:
             raise ConfigGomokuError('Game mode not correct')
-        if self.mode == 'PvE' and self.player_color not in ['black', 'white']:
+        if self.mode == 'PvE' and self.player_color.lower() not in ['black', 'white']:
             raise ConfigGomokuError('Color of player for PvE mode is not correct')
-        if self.mode == 'PvE' and self.difficult not in ['easy', 'medium', 'hard']:
+        if self.mode == 'PvE' and self.difficult.lower() not in ['easy', 'medium', 'hard']:
             raise ConfigGomokuError('Difficult of AI player for PvE mode is not correct')
 
     @property

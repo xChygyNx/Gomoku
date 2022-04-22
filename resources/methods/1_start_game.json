@@ -4,6 +4,6 @@
     "mode": "PvE",
     "difficult": "EASY",
     "board_size": 19,
-    "first_move": "BLACK"
+    "player_color": "BLACK"
   }
 }
