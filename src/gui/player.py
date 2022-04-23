@@ -1,14 +1,15 @@
 import tkinter as ttk
-from constants import BOARD_COLOR
+import json
+from constants import BOARD_COLOR, LABEL_FONT
 
 
 class Player:
 
     def __init__(self, win, name, color):
         self._win = win
-        self._name = ttk.Label(self._win, text=name, font=("Arial", 20), bg=BOARD_COLOR)
+        self._name = ttk.Label(self._win, text=name, font=LABEL_FONT, bg=BOARD_COLOR)
         self._count = ttk.IntVar()
-        self._catches = ttk.Label(self._win, textvariable=self._count, font=("Arial", 20), bg=BOARD_COLOR)
+        self._catches = ttk.Label(self._win, textvariable=self._count, font=LABEL_FONT, bg=BOARD_COLOR)
         self._color = color
 
         self._count.set(0)
@@ -36,3 +37,9 @@ class Player:
             return True
         else:
             return False
+
+    def __dict__(self):
+        return {"name": self.get_name(), "color": self.get_color(), "catches": self._count.get()}
+
+    def to_json(self):
+        return json.dumps(self.__dict__())

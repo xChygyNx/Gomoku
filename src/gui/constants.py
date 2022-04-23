@@ -1,4 +1,3 @@
-
 from sys import platform
 
 if platform == 'darwin':
@@ -34,4 +33,3 @@ BACKGROUND_COLOR = "#e2d891"
 BUTTON_COLOR = "#cfc685"
 HIGHLIGHT_COLOR = "#cfc6ff"
 BOARD_COLOR = "#bcb582"
-PAD_FROM_WIN = 35
