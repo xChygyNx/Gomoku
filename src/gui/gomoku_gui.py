@@ -1,9 +1,11 @@
 import json
 import tkinter as ttk
 import webbrowser as wb
-from game_config import GameConfig
-from constants import *
+
 from board import Board
+from constants import *
+from game_config import GameConfig
+from client.client import Client
 
 
 class GomokuGui:
@@ -20,7 +22,12 @@ class GomokuGui:
         self._board = None
         self._info_panel = None
 
-        self._client = None
+        try:
+            self._client = Client()
+            self._client.connect_to_server()
+        except ConnectionRefusedError:
+            self._client = None
+            print("Can't connect to server. Game available only PvP mode")
 
     def start(self):
         self.print_config()
@@ -110,28 +117,33 @@ class GomokuGui:
 
         color = ttk.StringVar()
         color.set("BLACK")
-        r1 = ttk.OptionMenu(frame, color, "BLACK", "WHITE")
-        r1.configure(font=BUTTON_FONT,
+        r3 = ttk.OptionMenu(frame, color, "BLACK", "WHITE")
+        r3.configure(font=BUTTON_FONT,
                      width=OPTION_MENU_WIDTH, height=OPTION_MENU_HEIGHT,
                      bg=BUTTON_COLOR, bd=4, cursor="hand2")
-        drop = self._root.nametowidget(r1.menuname)
+        drop = self._root.nametowidget(r3.menuname)
         drop.config(font=BUTTON_FONT, bg=BOARD_COLOR)
-        r1.place(relx=.65, rely=.65, anchor="center")
+        r3.place(relx=.65, rely=.65, anchor="center")
 
         b1.configure(command=lambda: self.start_game(
             GameConfig.create("PvE", hard.get(), board_size.get(), color.get())))
         b2.configure(command=lambda: self.start_game(
             GameConfig.create("PvP", hard.get(), board_size.get(), color.get())))
 
+        if self._client is None:
+            b1["state"] = "disabled"
+            r1["state"] = "disabled"
+            r3["state"] = "disabled"
+
     def start_game(self, config):
         self._config = config
-
         for widget in self._root.winfo_children():
             widget.destroy()
 
-        self._board = Board(self._root, config, self.__send_message_from_board__())
+        self._board = Board(self._root, config,
+                            self._send_message_from_board(),
+                            self._receive_message_in_board())
         self._board.print_board()
-        self._board.print_info()
         self.send_message(title="start", message=self._config.__dict__)
 
         back = ttk.Button(self._root, text="Back",
@@ -154,23 +166,28 @@ class GomokuGui:
         for widget in self._root.winfo_children():
             widget.destroy()
         self.print_config()
-        self.send_message(title="stop", message=dict())
+        self.send_message(title="end_game", message=dict())
 
-    def print_winner(self):
+    def print_winner(self, **kwargs):
         winner = ttk.Label(self._root,
                            text=f"{self._board.get_cur_player_name()} WINS",
                            font=(FONT, LABEL_FONT_SIZE, "bold"),
                            bg=BACKGROUND_COLOR)
         winner.place(relx=self._board.get_info_frame_rel_x(), rely=.825, anchor="center")
 
-    def __send_message_from_board__(self):
+    def _send_message_from_board(self):
         """Send player action to server"""
+
         def send(title, message: dict):
             res = {
                 "title": title,
                 "message": message
             }
-            print(f"Client send message: {json.dumps(res)}")
+            if self._client is not None:
+                self._client.send_data(json.dumps(res))
+                self._client.receive_response()
+            else:
+                print(json.dumps(res))
         return send
 
     def send_message(self, title, message: dict):
@@ -179,7 +196,19 @@ class GomokuGui:
             "title": title,
             "message": message
         }
-        print(f"Client send message: {json.dumps(res)}")
+        if self._client is not None:
+            self._client.send_data(json.dumps(res))
+            self._client.receive_response()
+        else:
+            print(json.dumps(res))
+
+    def _receive_message_in_board(self):
+        def send():
+            if self._client is not None:
+                return self._client.receive_response()
+            else:
+                return None
+        return send
 
 
 if __name__ == '__main__':

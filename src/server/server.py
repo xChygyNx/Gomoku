@@ -1,13 +1,33 @@
 import os
+import random
 import typing as t
 import dotenv
 import socket
 import json
 from src.gomoku import Gomoku
+import time
 
 
 dotenv.load_dotenv()
 
+MOVES = []
+
+
+def fill_moves(size):
+    for r in range(size):
+        for c in range(size):
+            MOVES.append(chr(97 + c) + str(r + 1))
+            print(chr(97 + c) + str(r + 1))
+
+
+def get_random_move():
+    pos = random.choice(MOVES)
+    MOVES.remove(pos)
+    return pos
+
+
+def remove_move(move):
+    MOVES.remove(move)
 
 class Server:
     def __init__(self):
@@ -36,13 +56,30 @@ class Server:
             if data.get('title') == 'start':
                 self.gomoku = Gomoku(**data.get('message'))
                 self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
+
+                # генерация тестовых данных
+                fill_moves(int(data["message"]["board_size"]) + 1)
+
             elif data.get('title') == 'end_game':
                 self.connection.send(json.dumps(data.get('message')).encode(os.environ['SERVER_ENCODING']))
                 break
             else:
                 self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
-                method = self.gomoku.__getattribute__(data.get('title'))
-                method(**data.get('message'))
+                if data.get('title') in dir(self.gomoku):
+                    method = self.gomoku.__getattribute__(data.get('title'))
+                    method(**data.get('message'))
+
+                    # отправляем рандомный неповторяющийся ответ
+                    time.sleep(0.5)
+                    remove_move(data["message"]["position"])
+                    answer = {
+                        "title": "make_turn",
+                        "message": {"position": get_random_move(), "color": "white"}
+                    }
+                    message = json.dumps(answer)
+                    self.connection.send(message.encode(os.environ['SERVER_ENCODING']))
+                else:
+                    print(f"Unresolved method {data.get('title')}")
                 yield data
 
     def listen_connection(self):
@@ -54,8 +91,9 @@ class Server:
 
 
 if __name__ == '__main__':
-    server = Server()
-    server.accept_connection()
-    server.listen_connection()
-    print('Thanks')
-    # launch something
+    while True:
+        server = Server()
+        server.accept_connection()
+        server.listen_connection()
+        print('Thanks')
+        # launch something
