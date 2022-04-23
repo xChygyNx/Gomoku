@@ -43,7 +43,7 @@ class Gomoku:
         elif self.black_capture >= 10:
             raise BlackPlayerWinException
 
-    def make_turn(self, position: str, color: str=None) -> None:
+    def make_turn(self, position: str, color: str=None, **kwargs) -> None:
         x, y = position[:1], int(position[1:]) - 1
         x = ord(x) - ord('a')
         if color is not None:

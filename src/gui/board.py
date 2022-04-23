@@ -196,22 +196,22 @@ class Board:
         self._switch_player()
         if self._cur_player.get_name().startswith("AI"):
             data = json.loads(self._receive_func())
-            method = self.__getattribute__(data["title"])
-            method(**data.get('message'))
+            method = self.__getattribute__(data["method"])
+            method(**data['arguments'])
 
     def _send_set_action(self, position):
-        message = {
+        arguments = {
             "position": position,
             "color": self._cur_player.get_color(),
         }
-        self._send_func(title="make_turn", message=message)
+        self._send_func(method="make_turn", arguments=arguments)
 
     def send_delete_action(self, position):
-        message = {
+        arguments = {
             "position": position,
             "color": self._cur_player.get_color(),
         }
-        self._send_func(title="delete", message=message)
+        self._send_func(method="delete", arguments=arguments)
 
     def get_cur_player_name(self):
         return self._cur_player.get_name()

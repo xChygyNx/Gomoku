@@ -1,6 +1,6 @@
 {
-  "title": "make_turn",
-  "message": {
+  "method": "make_turn",
+  "arguments": {
     "color": "white",
     "position": "n7"
   }

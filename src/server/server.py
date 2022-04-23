@@ -14,10 +14,10 @@ MOVES = []
 
 
 def fill_moves(size):
+    MOVES.clear()
     for r in range(size):
         for c in range(size):
             MOVES.append(chr(97 + c) + str(r + 1))
-            print(chr(97 + c) + str(r + 1))
 
 
 def get_random_move():
@@ -28,6 +28,7 @@ def get_random_move():
 
 def remove_move(move):
     MOVES.remove(move)
+
 
 class Server:
     def __init__(self):
@@ -52,42 +53,42 @@ class Server:
     def get_data(self) -> t.Generator:
         while True:
             data = self.connection.recv(int(os.environ['SERVER_BATCH_SIZE'])).decode(os.environ['SERVER_ENCODING'])
+            if not data:
+                break
             data = json.loads(data)
-            if data.get('title') == 'start':
-                self.gomoku = Gomoku(**data.get('message'))
+            if data.get('method') == 'start':
+                self.gomoku = Gomoku(**data.get('arguments'))
                 self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
 
                 # генерация тестовых данных
-                fill_moves(int(data["message"]["board_size"]) + 1)
-
-            elif data.get('title') == 'end_game':
-                self.connection.send(json.dumps(data.get('message')).encode(os.environ['SERVER_ENCODING']))
+                fill_moves(int(data["arguments"]["board_size"]) + 1)
+            elif data.get('method') == 'end_game':
                 break
             else:
                 self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
-                if data.get('title') in dir(self.gomoku):
-                    method = self.gomoku.__getattribute__(data.get('title'))
-                    method(**data.get('message'))
+                if data.get('method') in dir(self.gomoku):
+                    method = self.gomoku.__getattribute__(data.get('method'))
+                    method(**data.get('arguments'))
 
                     # отправляем рандомный неповторяющийся ответ
                     time.sleep(0.5)
-                    remove_move(data["message"]["position"])
+                    remove_move(data["arguments"]["position"])
                     answer = {
-                        "title": "make_turn",
-                        "message": {"position": get_random_move(), "color": "white"}
+                        "method": "make_turn",
+                        "arguments": {"position": get_random_move(), "color": "white"}
                     }
-                    message = json.dumps(answer)
-                    self.connection.send(message.encode(os.environ['SERVER_ENCODING']))
+                    arguments = json.dumps(answer)
+                    self.connection.send(arguments.encode(os.environ['SERVER_ENCODING']))
                 else:
-                    print(f"Unresolved method {data.get('title')}")
+                    print(f"Unresolved method {data.get('method')}")
                 yield data
 
     def listen_connection(self):
         for message in self.get_data():
-            print(message)
-            print()
+            if message:
+                print(message)
+                print()
         self.connection.close()
-
 
 
 if __name__ == '__main__':
@@ -96,4 +97,3 @@ if __name__ == '__main__':
         server.accept_connection()
         server.listen_connection()
         print('Thanks')
-        # launch something

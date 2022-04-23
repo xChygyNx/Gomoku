@@ -10,7 +10,7 @@ from client.client import Client
 
 class GomokuGui:
 
-    def __init__(self, width=WIN_WIDTH, heigth=WIN_HEIGHT):
+    def __init__(self, width=WIN_WIDTH, heigth=WIN_HEIGHT, client=None):
         self._root = ttk.Tk()
 
         self._root.title('Gomoku')
@@ -21,10 +21,11 @@ class GomokuGui:
         self._config = None
         self._board = None
         self._info_panel = None
+        self._client = client
 
         try:
-            self._client = Client()
             self._client.connect_to_server()
+            self._root.protocol("WM_DELETE_WINDOW", self._end_game)
         except ConnectionRefusedError:
             self._client = None
             print("Can't connect to server. Game available only PvP mode")
@@ -144,7 +145,7 @@ class GomokuGui:
                             self._send_message_from_board(),
                             self._receive_message_in_board())
         self._board.print_board()
-        self.send_message(title="start", message=self._config.__dict__)
+        self.send_message(method="start", arguments=self._config.__dict__)
 
         back = ttk.Button(self._root, text="Back",
                           font=BUTTON_FONT,
@@ -162,11 +163,14 @@ class GomokuGui:
         back.configure(command=self.restart_game)
         back.place(relx=self._board.get_info_frame_rel_x(), rely=.95, anchor="center")
 
+    def _end_game(self):
+        self._client.connection.close()
+        self._root.destroy()
+
     def restart_game(self):
         for widget in self._root.winfo_children():
             widget.destroy()
         self.print_config()
-        self.send_message(title="end_game", message=dict())
 
     def print_winner(self, **kwargs):
         winner = ttk.Label(self._root,
@@ -175,32 +179,25 @@ class GomokuGui:
                            bg=BACKGROUND_COLOR)
         winner.place(relx=self._board.get_info_frame_rel_x(), rely=.825, anchor="center")
 
-    def _send_message_from_board(self):
-        """Send player action to server"""
-
-        def send(title, message: dict):
-            res = {
-                "title": title,
-                "message": message
-            }
-            if self._client is not None:
-                self._client.send_data(json.dumps(res))
-                self._client.receive_response()
-            else:
-                print(json.dumps(res))
-        return send
-
-    def send_message(self, title, message: dict):
+    def send_message(self, method, arguments: dict):
         """Send player action to server """
-        res = {
-            "title": title,
-            "message": message
-        }
+        message = create_message(method, arguments)
         if self._client is not None:
-            self._client.send_data(json.dumps(res))
+            self._client.send_data(message)
             self._client.receive_response()
         else:
-            print(json.dumps(res))
+            print(message)
+
+    def _send_message_from_board(self):
+        """Send player action to server"""
+        def send(method, arguments: dict):
+            message = create_message(method, arguments)
+            if self._client is not None:
+                self._client.send_data(message)
+                self._client.receive_response()
+            else:
+                print(message)
+        return send
 
     def _receive_message_in_board(self):
         def send():
@@ -211,6 +208,15 @@ class GomokuGui:
         return send
 
 
+def create_message(method, arguments):
+    res = {
+        "method": method,
+        "arguments": arguments
+    }
+    return json.dumps(res)
+
+
 if __name__ == '__main__':
-    gui = GomokuGui(WIN_WIDTH, WIN_HEIGHT)
+    client = Client()
+    gui = GomokuGui(WIN_WIDTH, WIN_HEIGHT, client=client)
     gui.start()
