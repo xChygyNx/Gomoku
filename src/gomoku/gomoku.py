@@ -21,8 +21,6 @@ class Gomoku:
         self.check_init()
 
     def check_init(self):
-        if self.board_size is None:
-            raise ConfigGomokuError('Board_size of Gomoku is unfilled')
         if self.mode not in ['PvE', 'PvP']:
             raise ConfigGomokuError('Game mode not correct')
         if self.mode == 'PvE' and self.player_color.lower() not in ['black', 'white']:
@@ -166,12 +164,12 @@ class Gomoku:
         seq_info = SequencesInfo()
         for init_v in range(4, self.board_size):
             seq_info.clear(pos_color=self.board[0][init_v])
-            for h, v in zip(range(0, init_v), range(init_v, 0, -1)):
+            for h, v in zip(range(0, init_v + 1), range(init_v, -1, -1)):
                 acc += seq_info.count_score(v, self.board[h][v])
             acc += seq_info.complete_line(self.board_size)
         for init_h in range(1, self.board_size - 4):
             seq_info.clear(pos_color=self.board[init_h][self.board_size - 1])
-            for h, v in zip (range(init_h, self.board_size), range(self.board_size, init_h, -1)):
+            for h, v in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
                 acc += seq_info.count_score(v, self.board[h][v])
             acc += seq_info.complete_line(self.board_size)
         return acc
@@ -184,7 +182,7 @@ class Gomoku:
             for h, v in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
                 acc += seq_info.count_score(v, self.board[h][v])
             acc += seq_info.complete_line(self.board_size)
-        for init_v in range(1, self.board_size - 4):
+        for init_v in range(0, self.board_size - 4):
             seq_info.clear(pos_color=self.board[0][init_v])
             for h, v in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
                 acc += seq_info.count_score(v, self.board[h][v])
