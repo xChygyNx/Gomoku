@@ -131,6 +131,29 @@ class BoardGui:
         self._p1.place(rel_y=.78)
         self._p2.place(rel_y=.88)
 
+    def print_winner(self, width=350, height=150, **kwargs):
+        window = ttk.Toplevel(background=BACKGROUND_COLOR,
+                              width=width, height=height)
+        window.title("WINNER")
+
+        x = self._win.winfo_x() + self._win.winfo_width() // 2 - width // 2
+        y = self._win.winfo_y() + self._win.winfo_height() // 2 - height // 2 - 50
+        window.geometry("+{}+{}".format(x, y))
+
+        label = ttk.Label(window,
+                          text=f"{self._cur_player.get_name()} WINS",
+                          font=(FONT, LABEL_FONT_SIZE, "bold"),
+                          bg=BACKGROUND_COLOR)
+        label.place(relx=.5, rely=.3, anchor="center")
+
+        button = ttk.Button(window, text="Restart",
+                            font=BUTTON_FONT,
+                            width=10, height=1,
+                            bg=BUTTON_COLOR, bd=4,
+                            cursor="hand2",
+                            command=window.destroy)
+        button.place(relx=.5, rely=.7, anchor="center")
+
     def make_turn_on_event(self, event):
         """Event on-click on board to set Piece"""
 
@@ -146,7 +169,8 @@ class BoardGui:
                        str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
 
             if position not in self._pieces:
-                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
+                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
+                                           fill=self._cur_player.get_color())
                 self._board_canvas.pack()
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
                 self._send_set_action(position)
@@ -166,7 +190,8 @@ class BoardGui:
 
             if self._padding / 2 < x < self._board_width - self._padding / 2 and \
                     self._padding / 2 < y < self._board_width - self._padding / 2:
-                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
+                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
+                                           fill=self._cur_player.get_color())
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
                 self._next()
 

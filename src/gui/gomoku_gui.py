@@ -12,16 +12,20 @@ class GomokuGui:
 
     def __init__(self, width=WIN_WIDTH, heigth=WIN_HEIGHT, client=None):
         self._root = ttk.Tk()
-
-        self._root.title('Gomoku')
-        self._root.geometry(f"{width}x{heigth}")
-        self._root.config(bg=BACKGROUND_COLOR)
-        self._root.update()
-
         self._config = None
         self._board = None
         self._info_panel = None
         self._client = client
+
+        self._root.title('Gomoku')
+        self._root.config(bg=BACKGROUND_COLOR)
+
+        x = int((self._root.winfo_screenwidth() / 2) - (width / 2))
+        y = int((self._root.winfo_screenheight() / 2) - (heigth / 2))
+        print(f"{width}x{heigth}+{x}+{y}")
+
+        self._root.geometry(f"{width}x{heigth}+{x}+{y}")
+        self._root.update()
 
         try:
             self._client.connect_to_server()
@@ -171,13 +175,6 @@ class GomokuGui:
         for widget in self._root.winfo_children():
             widget.destroy()
         self.print_config()
-
-    def print_winner(self, **kwargs):
-        winner = ttk.Label(self._root,
-                           text=f"{self._board.get_cur_player_name()} WINS",
-                           font=(FONT, LABEL_FONT_SIZE, "bold"),
-                           bg=BACKGROUND_COLOR)
-        winner.place(relx=self._board.get_info_frame_rel_x(), rely=.825, anchor="center")
 
     def send_message(self, method, arguments: dict):
         """Send player action to server """
