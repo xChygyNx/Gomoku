@@ -2,7 +2,7 @@ import json
 import tkinter as ttk
 import webbrowser as wb
 
-from board import Board
+from board_gui import BoardGui
 from constants import *
 from game_config import GameConfig
 from client.client import Client
@@ -141,9 +141,9 @@ class GomokuGui:
         for widget in self._root.winfo_children():
             widget.destroy()
 
-        self._board = Board(self._root, config,
-                            self._send_message_from_board(),
-                            self._receive_message_in_board())
+        self._board = BoardGui(self._root, config,
+                               self._send_message_from_board(),
+                               self._receive_message_in_board())
         self._board.print_board()
         self.send_message(method="start", arguments=self._config.__dict__)
 

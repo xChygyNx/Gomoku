@@ -5,7 +5,7 @@ from player import Player
 from piece import Piece
 
 
-class Board:
+class BoardGui:
 
     def __init__(self, win, config, send_func, receive_func):
         self._win = win
@@ -136,8 +136,8 @@ class Board:
 
         if self._cur_player.get_name().startswith("AI"):
             return
-        x = Board.round_cell(event.x - self._padding, self._cell_width) + self._padding
-        y = Board.round_cell(event.y - self._padding, self._cell_width) + self._padding
+        x = BoardGui.round_cell(event.x - self._padding, self._cell_width) + self._padding
+        y = BoardGui.round_cell(event.y - self._padding, self._cell_width) + self._padding
 
         if self._padding / 2 < x < self._board_width - self._padding / 2 and \
                 self._padding / 2 < y < self._board_width - self._padding / 2:
@@ -146,7 +146,7 @@ class Board:
                        str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
 
             if position not in self._pieces:
-                p = Board.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
+                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
                 self._board_canvas.pack()
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
                 self._send_set_action(position)
@@ -166,7 +166,7 @@ class Board:
 
             if self._padding / 2 < x < self._board_width - self._padding / 2 and \
                     self._padding / 2 < y < self._board_width - self._padding / 2:
-                p = Board.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
+                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill=self._cur_player.get_color())
                 self._pieces.append(Piece(p, position, self._cur_player.get_color()))
                 self._next()
 
