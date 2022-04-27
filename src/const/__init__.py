@@ -1,3 +1,7 @@
 INITIAL_STATE_SCORE = 0
+
 CAPATURE_DISTANCE = 3
+
 BOARD_SIZE = 19
+
+LETTERS = 'abcdefghijklmnopqrstuvwxyz'
