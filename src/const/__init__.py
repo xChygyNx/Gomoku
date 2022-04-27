@@ -4,4 +4,6 @@ CAPATURE_DISTANCE = 3
 
 BOARD_SIZE = 19
 
+WIN_SEQUENCE_LENGTH = 5
+
 LETTERS = 'abcdefghijklmnopqrstuvwxyz'

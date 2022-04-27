@@ -1,7 +1,7 @@
 import re
 import typing as t
 
-from src.const import LETTERS
+from src.const import LETTERS, WIN_SEQUENCE_LENGTH
 from src.gomoku.structures import Color
 from src.exceptions import *
 
@@ -30,96 +30,84 @@ class Board:
             raise ValueError(f'Coordinate {coord} absence on board')
         return x, y
 
-    def checks(self, x: int, y: int):
+    def coordinate_generator(self, coordinate: int) -> t.Generator[int]:
+        for i in range(coordinate - WIN_SEQUENCE_LENGTH + 1, coordinate + WIN_SEQUENCE_LENGTH):
+            if 0 <= i <= self.board_size:
+                yield i
+
+    def diagonal_coordinate_generator(self, coordinate_x: int, coordinate_y: int) -> t.Generator[t.Tuple[int, int]]:
+        for i, j in zip(range(coordinate_x - WIN_SEQUENCE_LENGTH + 1, coordinate_x + WIN_SEQUENCE_LENGTH),
+                        range(coordinate_y - WIN_SEQUENCE_LENGTH + 1, coordinate_y + WIN_SEQUENCE_LENGTH)):
+            if 0 <= i < self.board_size and 0 <= j < self.board_size:
+                yield i, j
+
+    def alternative_diagonal_coordinate_generator(self, coordinate_x: int, coordinate_y: int) \
+            -> t.Generator[t.Tuple[int, int]]:
+        for i, j in zip(range(coordinate_x - WIN_SEQUENCE_LENGTH + 1, coordinate_x + WIN_SEQUENCE_LENGTH),
+                        range(coordinate_y + WIN_SEQUENCE_LENGTH - 1, coordinate_y - WIN_SEQUENCE_LENGTH)):
+            if 0 <= i < self.board_size and 0 <= j < self.board_size:
+                yield i, j
+
+    def checks(self, x: int, y: int, now_turn: Color):
         self.check_free_pos(x, y)
-        self.check_win()
+        self.check_win(x, y, now_turn)
         self.check_forbidden_turn(x, y)
 
     def check_free_pos(self, x: int, y: int):
         if self.board[x][y] != Color.EMPTY:
             raise BusyCell(x, y)
 
-    def check_win(self):
-        self.check_win_horizontals()
-        self.check_win_verticals()
-        self.check_win_diagonals_1()
-        self.check_win_diagonals_2()
+    def check_win(self, x: int, y: int, now_turn: Color):
+        self.check_win_horizontals(x, y, now_turn)
+        self.check_win_verticals(x, y, now_turn)
+        self.check_win_diagonals_1(x, y, now_turn)
+        self.check_win_diagonals_2(x, y, now_turn)
 
-    def check_win_horizontals(self):
-        for line in self.board:
-            now_seq = Color.EMPTY
-            seq_len = 0
-            for pos in line:
-                if pos == now_seq:
-                    seq_len += 1
-                else:
-                    seq_len = 1
-                if seq_len == 5 and pos != Color.EMPTY:
-                    exception = BlackPlayerWinException if pos == Color.BLACK else WhitePlayerWinException
-                    raise exception()
+    def check_win_horizontals(self, x: int, y: int, now_turn: Color) -> None:
+        seq_len = 0
+        for x in self.coordinate_generator(x):
+            if self.board[x][y] == now_turn:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == 5:
+                exception = BlackPlayerWinException if now_turn == Color.BLACK else WhitePlayerWinException
+                raise exception()
 
-    def check_win_verticals(self):
-        for x in range(self.board_size):
-            now_seq = Color.EMPTY
-            seq_len = 0
-            for y in range(self.board_size):
-                if self.board[x][y] == now_seq:
-                    seq_len += 1
-                else:
-                    seq_len = 1
-                if seq_len == 5 and self.board[x][y] != Color.EMPTY:
-                    exception = BlackPlayerWinException if self.board[x][y] == Color.BLACK else WhitePlayerWinException
-                    raise exception()
+    def check_win_verticals(self, x: int, y: int, now_turn: Color) -> None:
+        seq_len = 0
+        for y in self.coordinate_generator(y):
+            if self.board[x][y] == now_turn:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == 5:
+                exception = BlackPlayerWinException if now_turn == Color.BLACK else WhitePlayerWinException
+                raise exception()
 
-    def check_win_diagonals_1(self):
-        for init_v in range(4, self.board_size):
-            now_seq = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(0, init_v + 1), range(init_v, -1, -1)):
-                if self.board[x][y] == now_seq:
-                    seq_len += 1
-                else:
-                    seq_len = 1
-                if seq_len == 5 and self.board[x][y] != Color.EMPTY:
-                    exception = BlackPlayerWinException if self.board[x][y] == Color.BLACK else WhitePlayerWinException
-                    raise exception()
-        for init_h in range(1, self.board_size - 4):
-            now_seq = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
-                if self.board[x][y] == now_seq:
-                    seq_len += 1
-                else:
-                    seq_len = 1
-                if seq_len == 5 and self.board[x][y] != Color.EMPTY:
-                    exception = BlackPlayerWinException if self.board[x][y] == Color.BLACK else WhitePlayerWinException
-                    raise exception()
+    def check_win_diagonals_1(self, x: int, y: int, now_turn: Color) -> None:
+        seq_len = 0
+        for x, y in self.diagonal_coordinate_generator(x, y):
+            if self.board[x][y] == now_turn:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == 5:
+                exception = BlackPlayerWinException if now_turn == Color.BLACK else WhitePlayerWinException
+                raise exception()
 
-    def check_win_diagonals_2(self):
-        for init_h in range(self.board_size - 5, 0, -1):
-            now_seq = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
-                if self.board[x][y] == now_seq:
-                    seq_len += 1
-                else:
-                    seq_len = 1
-                if seq_len == 5 and self.board[x][y] != Color.EMPTY:
-                    exception = BlackPlayerWinException if self.board[x][y] == Color.BLACK else WhitePlayerWinException
-                    raise exception()
-        for init_v in range(0, self.board_size - 4):
-            now_seq = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
-                if self.board[x][y] == now_seq:
-                    seq_len += 1
-                else:
-                    seq_len = 1
-                if seq_len == 5 and self.board[x][y] != Color.EMPTY:
-                    exception = BlackPlayerWinException if self.board[x][y] == Color.BLACK else WhitePlayerWinException
-                    raise exception()
+    def check_win_diagonals_2(self, x: int, y: int, now_turn: Color) -> None:
+        seq_len = 0
+        for x, y in self.alternative_diagonal_coordinate_generator(x, y):
+            if self.board[x][y] == now_turn:
+                seq_len += 1
+            else:
+                seq_len = 1
+            if seq_len == 5:
+                exception = BlackPlayerWinException if now_turn == Color.BLACK else WhitePlayerWinException
+                raise exception()
 
     def check_forbidden_turn(self, x: int, y: int):
         if True:
             return
-        raise ForbiddenTurn(self.convert_to_str_coordinate(x, y))
+        # raise ForbiddenTurn(self.convert_to_str_coordinate(x, y))
