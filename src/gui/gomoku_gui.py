@@ -22,7 +22,6 @@ class GomokuGui:
 
         x = int((self._root.winfo_screenwidth() / 2) - (width / 2))
         y = int((self._root.winfo_screenheight() / 2) - (heigth / 2))
-        print(f"{width}x{heigth}+{x}+{y}")
 
         self._root.geometry(f"{width}x{heigth}+{x}+{y}")
         self._root.update()

@@ -3,6 +3,7 @@ import json
 from constants import *
 from player import Player
 from piece import Piece
+from board.board import Board
 
 
 class BoardGui:
@@ -18,12 +19,14 @@ class BoardGui:
         self._piece_radius = round(self._cell_width / 3)
         self._board_frame = None
         self._board_canvas = None
+        self._board = Board(board_size=self._config.get_board_size())
 
         # info frame props
         self._info_frame = None
         self._turn = ttk.StringVar()
         self._moves = ttk.IntVar()
         self._moves.set(0)
+        self._winner = None
 
         # player properties
         self._p1 = None
@@ -131,28 +134,13 @@ class BoardGui:
         self._p1.place(rel_y=.78)
         self._p2.place(rel_y=.88)
 
-    def print_winner(self, width=350, height=150, **kwargs):
-        window = ttk.Toplevel(background=BACKGROUND_COLOR,
-                              width=width, height=height)
-        window.title("WINNER")
-
-        x = self._win.winfo_x() + self._win.winfo_width() // 2 - width // 2
-        y = self._win.winfo_y() + self._win.winfo_height() // 2 - height // 2 - 50
-        window.geometry("+{}+{}".format(x, y))
-
-        label = ttk.Label(window,
-                          text=f"{self._cur_player.get_name()} WINS",
-                          font=(FONT, LABEL_FONT_SIZE, "bold"),
-                          bg=BACKGROUND_COLOR)
-        label.place(relx=.5, rely=.3, anchor="center")
-
-        button = ttk.Button(window, text="Restart",
-                            font=BUTTON_FONT,
-                            width=10, height=1,
-                            bg=BUTTON_COLOR, bd=4,
-                            cursor="hand2",
-                            command=window.destroy)
-        button.place(relx=.5, rely=.7, anchor="center")
+    def print_winner(self, **kwargs):
+        self._winner = ttk.Label(self._win,
+                           text=f"{self._cur_player.get_name()} WINS",
+                           font=(FONT, LABEL_FONT_SIZE, "bold"),
+                           bg=BACKGROUND_COLOR)
+        self._winner.place(relx=self.get_info_frame_rel_x(), rely=.825, anchor="center")
+        self._board_canvas.unbind('<Button-1>')
 
     def make_turn_on_event(self, event):
         """Event on-click on board to set Piece"""
@@ -162,25 +150,19 @@ class BoardGui:
         x = BoardGui.round_cell(event.x - self._padding, self._cell_width) + self._padding
         y = BoardGui.round_cell(event.y - self._padding, self._cell_width) + self._padding
 
-        if self._padding / 2 < x < self._board_width - self._padding / 2 and \
-                self._padding / 2 < y < self._board_width - self._padding / 2:
+        position = chr(ord('a') + round((x - self._padding) / self._cell_width)) + \
+                   str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
 
-            position = chr(ord('a') + round((x - self._padding) / self._cell_width)) + \
-                       str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
+        if self.if_pos_in_bound(x, y):
 
-            if position not in self._pieces:
-                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
-                                           fill=self._cur_player.get_color())
-                self._board_canvas.pack()
-                self._pieces.append(Piece(p, position, self._cur_player.get_color()))
+            if self.set_piece(position, x, y):
                 self._send_set_action(position)
+
+                if self._board.is_win():
+                    self.print_winner()
                 self._next()
 
     def make_turn(self, position, **kwargs):
-
-        # if kwargs["color"] != self._cur_player.get_color():
-        #     print("Wrong color")
-
         if position not in self._pieces:
             column = ord(position[0]) - ord('a')
             row = self._config.get_board_size() - int(position[1:]) + 1
@@ -188,11 +170,8 @@ class BoardGui:
             x = self._padding + self._cell_width * column
             y = self._padding + self._cell_width * row
 
-            if self._padding / 2 < x < self._board_width - self._padding / 2 and \
-                    self._padding / 2 < y < self._board_width - self._padding / 2:
-                p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
-                                           fill=self._cur_player.get_color())
-                self._pieces.append(Piece(p, position, self._cur_player.get_color()))
+            if self.if_pos_in_bound(x, y):
+                self.set_piece(position, x, y)
                 self._next()
 
     def _switch_player(self):
@@ -204,15 +183,19 @@ class BoardGui:
         self._info_frame.update_idletasks()
 
     def back(self, catch=False):
+        if self._winner is not None:
+            self._board_canvas.bind('<Button-1>', self.make_turn_on_event)
+            self._winner.destroy()
+            self._winner = None
         cur = self._moves.get()
         if cur != 0:
             if catch:
                 self._cur_player.undo_catch()
             p = self._pieces.pop()
-            self._board_canvas.delete(p.get_piece())
+            self.delete_piece(p)
             self._switch_player()
             self._moves.set(self._moves.get() - 1)
-            self.send_delete_action(p.get_pos())
+            self._send_delete_action(p.get_pos())
 
     def _next(self, catch=False):
         if catch:
@@ -224,6 +207,24 @@ class BoardGui:
             method = self.__getattribute__(data["method"])
             method(**data['arguments'])
 
+    def if_pos_in_bound(self, x, y):
+        return self._padding / 2 < x < self._board_width - self._padding / 2 and \
+               self._padding / 2 < y < self._board_width - self._padding / 2
+
+    def set_piece(self, position, x, y):
+        if position not in self._pieces:
+            p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
+                                       fill=self._cur_player.get_color())
+            self._board_canvas.pack()
+            self._pieces.append(Piece(p, position, self._cur_player.get_color()))
+            self._board.set_piece(position, self._cur_player.get_color())
+            return True
+        return False
+
+    def delete_piece(self, piece):
+        self._board_canvas.delete(piece.get_piece())
+        self._board.delete_piece(piece.get_pos())
+
     def _send_set_action(self, position):
         arguments = {
             "position": position,
@@ -231,7 +232,7 @@ class BoardGui:
         }
         self._send_func(method="make_turn", arguments=arguments)
 
-    def send_delete_action(self, position):
+    def _send_delete_action(self, position):
         arguments = {
             "position": position,
             "color": self._cur_player.get_color(),
