@@ -30,7 +30,7 @@ class Board:
     def coordinates_to_position(self, x: int, y: int) -> str:
         if x > self.board_size or y > self.board_size:
             raise ValueError(f'Coordinate ({x}, {y}) absence on board')
-        return LETTERS[x] + str(y)
+        return LETTERS[x] + str(self.board_size - y)
 
     def position_to_coordinates(self, coord: str) -> t.Tuple[int, int]:
         # if re.match('[a-z]', coord[0]) is None or re.match('^\d{1:2}$', coord[1:]) is None:
@@ -64,59 +64,113 @@ class Board:
         return False
 
     def check_win_horizontals(self):
-        for line in self.board:
+        for y in range(len(self.board)):
             seq_color = Color.EMPTY
             seq_len = 0
-            for current_color in line:
-                seq_color, seq_len = self._check_win_strike(current_color, seq_color, seq_len)
+            for x in range(len(self.board)):
+                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
 
     def check_win_verticals(self):
         for x in range(self.board_size):
             seq_color = Color.EMPTY
             seq_len = 0
             for y in range(self.board_size):
-                seq_color, seq_len = self._check_win_strike(self.board[y][x], seq_color, seq_len)
+                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
 
     def check_win_diagonals_1(self):
         for init_v in range(4, self.board_size):
             seq_color = Color.EMPTY
             seq_len = 0
             for x, y in zip(range(0, init_v + 1), range(init_v, -1, -1)):
-                seq_color, seq_len = self._check_win_strike(self.board[y][x], seq_color, seq_len)
+                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
 
         for init_h in range(1, self.board_size - 4):
             seq_color = Color.EMPTY
             seq_len = 0
             for x, y in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
-                seq_color, seq_len = self._check_win_strike(self.board[y][x], seq_color, seq_len)
+                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
 
     def check_win_diagonals_2(self):
         for init_h in range(self.board_size - 5, 0, -1):
             seq_color = Color.EMPTY
             seq_len = 0
             for x, y in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
-                seq_color, seq_len = self._check_win_strike(self.board[y][x], seq_color, seq_len)
+                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
         for init_v in range(0, self.board_size - 4):
             seq_color = Color.EMPTY
             seq_len = 0
             for x, y in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
-                seq_color, seq_len = self._check_win_strike(self.board[y][x], seq_color, seq_len)
+                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
 
     def check_forbidden_turn(self, x: int, y: int):
         pass
         raise ForbiddenTurn(self.coordinates_to_position(x, y))
 
-    @staticmethod
-    def _check_win_strike(current_color, seq_color, seq_len):
+    def _check_win_strike(self, x, y, seq_color, seq_len):
+        current_color = self.board[y][x]
         if current_color == seq_color and current_color != Color.EMPTY:
             seq_len += 1
         else:
             seq_len = 1
             seq_color = current_color
-        if seq_len == 5 and current_color != Color.EMPTY:
+        if seq_len == 5:
             exception = BlackPlayerWinException if current_color == Color.BLACK else WhitePlayerWinException
             raise exception()
         return seq_color, seq_len
+
+    def get_win_strike(self):
+        strike = []
+        # horizontal
+        for y in range(len(self.board)):
+            seq_color = Color.EMPTY
+            for x in range(len(self.board)):
+                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
+                if len(strike) == 5:
+                    return strike
+        # vertical
+        for x in range(len(self.board)):
+            seq_color = Color.EMPTY
+            for y in range(len(self.board)):
+                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
+                if len(strike) == 5:
+                    return strike
+        # diagonal 1
+        for init_v in range(4, self.board_size):
+            seq_color = Color.EMPTY
+            for x, y in zip(range(0, init_v + 1), range(init_v, -1, -1)):
+                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
+                if len(strike) == 5:
+                    return strike
+        for init_h in range(1, self.board_size - 4):
+            seq_color = Color.EMPTY
+            for x, y in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
+                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
+                if len(strike) == 5:
+                    return strike
+
+        # diagonal 2
+        for init_h in range(self.board_size - 5, 0, -1):
+            seq_color = Color.EMPTY
+            for x, y in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
+                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
+                if len(strike) == 5:
+                    return strike
+        for init_v in range(0, self.board_size - 4):
+            seq_color = Color.EMPTY
+            for x, y in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
+                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
+                if len(strike) == 5:
+                    return strike
+        return []
+
+    def _check_next_in_strike(self, x, y, seq_color, strike):
+        current_color = self.board[y][x]
+        if current_color == seq_color and current_color != Color.EMPTY:
+            strike.append(self.coordinates_to_position(x, y))
+        else:
+            strike = [self.coordinates_to_position(x, y)]
+            seq_color = current_color
+        return seq_color, strike
 
     def __str__(self):
         res = ""

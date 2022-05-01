@@ -27,6 +27,7 @@ class BoardGui:
         self._moves = ttk.IntVar()
         self._moves.set(0)
         self._winner = None
+        self._win_strike = []
 
         # player properties
         self._p1 = None
@@ -141,6 +142,8 @@ class BoardGui:
                            bg=BACKGROUND_COLOR)
         self._winner.place(relx=self.get_info_frame_rel_x(), rely=.825, anchor="center")
         self._board_canvas.unbind('<Button-1>')
+        strike = self._board.get_win_strike()
+        self._print_win_strike(strike)
 
     def make_turn_on_event(self, event):
         """Event on-click on board to set Piece"""
@@ -164,11 +167,7 @@ class BoardGui:
 
     def make_turn(self, position, **kwargs):
         if position not in self._pieces:
-            column = ord(position[0]) - ord('a')
-            row = self._config.get_board_size() - int(position[1:]) + 1
-
-            x = self._padding + self._cell_width * column
-            y = self._padding + self._cell_width * row
+            x, y = self.get_coordinates_by_pos(position)
 
             if self.if_pos_in_bound(x, y):
                 self.set_piece(position, x, y)
@@ -184,9 +183,7 @@ class BoardGui:
 
     def back(self, catch=False):
         if self._winner is not None:
-            self._board_canvas.bind('<Button-1>', self.make_turn_on_event)
-            self._winner.destroy()
-            self._winner = None
+            self._delete_win_strike()
         cur = self._moves.get()
         if cur != 0:
             if catch:
@@ -210,6 +207,31 @@ class BoardGui:
     def if_pos_in_bound(self, x, y):
         return self._padding / 2 < x < self._board_width - self._padding / 2 and \
                self._padding / 2 < y < self._board_width - self._padding / 2
+
+    def get_coordinates_by_pos(self, position):
+        column = ord(position[0]) - ord('a')
+        row = self._config.get_board_size() - int(position[1:]) + 1
+
+        x = self._padding + self._cell_width * column
+        y = self._padding + self._cell_width * row
+        return x, y
+
+    def _print_win_strike(self, strike):
+        for position in strike:
+            x, y = self.get_coordinates_by_pos(position)
+            outline = "white" if self._cur_player.get_color() == "black" else "black"
+            p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
+                                       fill=self._cur_player.get_color(),
+                                       outline=outline, width=2)
+            self._win_strike.append(Piece(p, position, self._cur_player.get_color()))
+
+    def _delete_win_strike(self):
+        self._board_canvas.bind('<Button-1>', self.make_turn_on_event)
+        self._winner.destroy()
+        self._winner = None
+        for piece in self._win_strike:
+            self._board_canvas.delete(piece.get_piece())
+        self._win_strike = []
 
     def set_piece(self, position, x, y):
         if position not in self._pieces:
