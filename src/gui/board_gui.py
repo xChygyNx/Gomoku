@@ -34,6 +34,8 @@ class BoardGui:
         self._p2 = None
         self._cur_player = None
         self._pieces = []
+        # p2: [piece1, piece2]
+        self._captured = dict()
 
         self._send_func = send_func
         self._receive_func = receive_func
@@ -137,12 +139,12 @@ class BoardGui:
 
     def print_winner(self, **kwargs):
         self._winner = ttk.Label(self._win,
-                           text=f"{self._cur_player.get_name()} WINS",
-                           font=(FONT, LABEL_FONT_SIZE, "bold"),
-                           bg=BACKGROUND_COLOR)
+                                 text=f"{self._cur_player.get_name()} WINS",
+                                 font=(FONT, LABEL_FONT_SIZE, "bold"),
+                                 bg=BACKGROUND_COLOR)
         self._winner.place(relx=self.get_info_frame_rel_x(), rely=.825, anchor="center")
         self._board_canvas.unbind('<Button-1>')
-        strike = self._board.get_win_strike()
+        strike = self._board.get_win_positions()
         self._print_win_strike(strike)
 
     def make_turn_on_event(self, event):
@@ -154,23 +156,25 @@ class BoardGui:
         y = BoardGui.round_cell(event.y - self._padding, self._cell_width) + self._padding
 
         position = chr(ord('a') + round((x - self._padding) / self._cell_width)) + \
-                   str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
+            str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
 
         if self.if_pos_in_bound(x, y):
 
-            if self.set_piece(position, x, y):
+            if self.set_piece(position, x, y, self._cur_player.get_color()):
                 self._send_set_action(position)
 
-                if self._board.is_win():
+                if self._board.is_win() or self._cur_player.catches() >= 10:
                     self.print_winner()
                 self._next()
 
     def make_turn(self, position, **kwargs):
-        if position not in self._pieces:
-            x, y = self.get_coordinates_by_pos(position)
+        if not self.piece_on_table(position):
+            x, y = self.get_coordinates_on_board_by_pos(position)
 
             if self.if_pos_in_bound(x, y):
-                self.set_piece(position, x, y)
+                self.set_piece(position, x, y, self._cur_player.get_color())
+                if "captured" in kwargs.keys():
+                    self.hide_captured(position, kwargs["captured"])
                 self._next()
 
     def _switch_player(self):
@@ -181,22 +185,22 @@ class BoardGui:
         self._turn.set(self._cur_player.get_name())
         self._info_frame.update_idletasks()
 
-    def back(self, catch=False):
+    def back(self):
         if self._winner is not None:
             self._delete_win_strike()
-        cur = self._moves.get()
-        if cur != 0:
-            if catch:
-                self._cur_player.undo_catch()
-            p = self._pieces.pop()
+        if self._moves.get() != 0:
+            p = next(self._pieces[i] for i in range(len(self._pieces) - 1, -1, -1) if not self._pieces[i].is_captured())
             self.delete_piece(p)
-            self._switch_player()
             self._moves.set(self._moves.get() - 1)
+            self._switch_player()
+
+            pos = p.get_pos()
+            if pos in self._captured.keys():
+                self._cur_player.undo_catch(len(self._captured[pos]))
+                self.show_captured(pos)
             self._send_delete_action(p.get_pos())
 
-    def _next(self, catch=False):
-        if catch:
-            self._cur_player.catch()
+    def _next(self):
         self._moves.set(self._moves.get() + 1)
         self._switch_player()
         if self._cur_player.get_name().startswith("AI"):
@@ -208,7 +212,7 @@ class BoardGui:
         return self._padding / 2 < x < self._board_width - self._padding / 2 and \
                self._padding / 2 < y < self._board_width - self._padding / 2
 
-    def get_coordinates_by_pos(self, position):
+    def get_coordinates_on_board_by_pos(self, position):
         column = ord(position[0]) - ord('a')
         row = self._config.get_board_size() - int(position[1:]) + 1
 
@@ -218,7 +222,7 @@ class BoardGui:
 
     def _print_win_strike(self, strike):
         for position in strike:
-            x, y = self.get_coordinates_by_pos(position)
+            x, y = self.get_coordinates_on_board_by_pos(position)
             outline = "white" if self._cur_player.get_color() == "black" else "black"
             p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
                                        fill=self._cur_player.get_color(),
@@ -233,19 +237,55 @@ class BoardGui:
             self._board_canvas.delete(piece.get_piece())
         self._win_strike = []
 
-    def set_piece(self, position, x, y):
-        if position not in self._pieces:
+    def set_pieces(self, positions, color, **kwargs):
+        for pos in positions:
+            x, y = self.get_coordinates_on_board_by_pos(pos)
+            self.set_piece(pos, x, y, color, **kwargs)
+
+    def delete_pieces(self, positions):
+        for pos in positions:
+            self.delete_piece(pos)
+
+    def set_piece(self, position, x, y, color, **kwargs):
+        if not self.piece_on_table(position):
             p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius,
-                                       fill=self._cur_player.get_color())
+                                       fill=color, **kwargs)
             self._board_canvas.pack()
-            self._pieces.append(Piece(p, position, self._cur_player.get_color()))
-            self._board.set_piece(position, self._cur_player.get_color())
+            self._pieces.append(Piece(p, position, color))
+            self._board.set_piece_by_pos(position, color)
+            capture = self._board.get_positions_of_captures(position, color)
+            if len(capture) != 0:
+                self.hide_captured(position, capture)
+                self._cur_player.catch(len(capture))
             return True
+        return False
+
+    def piece_on_table(self, position):
+        if position in self._pieces:
+            piece = self._pieces[self._pieces.index(position)]
+            return not piece.is_captured()
         return False
 
     def delete_piece(self, piece):
         self._board_canvas.delete(piece.get_piece())
-        self._board.delete_piece(piece.get_pos())
+        self._board.delete_piece_by_pos(piece.get_pos())
+        self._pieces.remove(piece)
+
+    def hide_captured(self, position, captured):
+        self._captured[position] = []
+        for pos in captured:
+            piece = next(x for x in self._pieces if x == pos and not x.is_captured())
+            self._captured[position].append(piece)
+            self._board_canvas.itemconfigure(piece.get_piece(), state='hidden')
+            self._board.delete_piece_by_pos(piece.get_pos())
+            piece.catch()
+
+    def show_captured(self, position):
+        if position in self._captured.keys():
+            for piece in self._captured[position]:
+                self._board_canvas.itemconfigure(piece.get_piece(), state='normal')
+                piece.uncatch()
+                self._board.set_piece_by_pos(piece.get_pos(), piece.get_color())
 
     def _send_set_action(self, position):
         arguments = {

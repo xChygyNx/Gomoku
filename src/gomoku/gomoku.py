@@ -3,7 +3,7 @@ import typing as t
 from src.gomoku.structures import Color, SequencesInfo
 from src.exceptions import *
 from src.const import (
-    CAPATURE_DISTANCE,
+    CAPTURE_DISTANCE,
     INITIAL_STATE_SCORE,
     BOARD_SIZE,
 )
@@ -47,7 +47,6 @@ class Gomoku:
         if color is not None:
             color = Color.__getattr__(color.upper())
         self._make_turn(x, y, color)
-
 
     def _make_turn(self, x: int, y: int, color: Color = None) -> None:
         if self.board[x][y] != Color.EMPTY:
@@ -105,25 +104,25 @@ class Gomoku:
         self.board[x+1][y-1] = Color.EMPTY
 
     def make_capture(self, x: int, y: int) -> None:
-        if x - CAPATURE_DISTANCE >= 0 and self.board[x - CAPATURE_DISTANCE][y] == self.now_turn:
-            self.check_and_clear_horizontal(x - CAPATURE_DISTANCE + 1, y)
-        if x + CAPATURE_DISTANCE <= (self.board_size - 1) and self.board[x + CAPATURE_DISTANCE][y] == self.now_turn:
+        if x - CAPTURE_DISTANCE >= 0 and self.board[x - CAPTURE_DISTANCE][y] == self.now_turn:
+            self.check_and_clear_horizontal(x - CAPTURE_DISTANCE + 1, y)
+        if x + CAPTURE_DISTANCE <= (self.board_size - 1) and self.board[x + CAPTURE_DISTANCE][y] == self.now_turn:
             self.check_and_clear_horizontal(x + 1, y)
-        if y - CAPATURE_DISTANCE >= 0 and self.board[x][y - CAPATURE_DISTANCE] == self.now_turn:
-            self.check_and_clear_vertical(x, y - CAPATURE_DISTANCE + 1)
-        if y + CAPATURE_DISTANCE <= (self.board_size - 1) and self.board[x][y + CAPATURE_DISTANCE] == self.now_turn:
+        if y - CAPTURE_DISTANCE >= 0 and self.board[x][y - CAPTURE_DISTANCE] == self.now_turn:
+            self.check_and_clear_vertical(x, y - CAPTURE_DISTANCE + 1)
+        if y + CAPTURE_DISTANCE <= (self.board_size - 1) and self.board[x][y + CAPTURE_DISTANCE] == self.now_turn:
             self.check_and_clear_vertical(x, y + 1)
-        if (x - CAPATURE_DISTANCE >= 0 and y - CAPATURE_DISTANCE >= 0) and \
-            self.board[x-CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
-            self.check_and_clear_diagonal_1(x - CAPATURE_DISTANCE + 1, y - CAPATURE_DISTANCE + 1)
-        if (x + CAPATURE_DISTANCE <= (self.board_size - 1) and y + CAPATURE_DISTANCE <= (self.board_size - 1)) and \
-            self.board[x+CAPATURE_DISTANCE][y+CAPATURE_DISTANCE] == self.now_turn:
+        if (x - CAPTURE_DISTANCE >= 0 and y - CAPTURE_DISTANCE >= 0) and \
+                self.board[x - CAPTURE_DISTANCE][y - CAPTURE_DISTANCE] == self.now_turn:
+            self.check_and_clear_diagonal_1(x - CAPTURE_DISTANCE + 1, y - CAPTURE_DISTANCE + 1)
+        if (x + CAPTURE_DISTANCE <= (self.board_size - 1) and y + CAPTURE_DISTANCE <= (self.board_size - 1)) and \
+                self.board[x + CAPTURE_DISTANCE][y + CAPTURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_1(x + 1, y + 1)
-        if (x - CAPATURE_DISTANCE >= 0 and y + CAPATURE_DISTANCE <= (self.board_size - 1)) and \
-            self.board[x-CAPATURE_DISTANCE][y+CAPATURE_DISTANCE] == self.now_turn:
-            self.check_and_clear_diagonal_2(x - CAPATURE_DISTANCE + 1, y + CAPATURE_DISTANCE - 1)
-        if (x + CAPATURE_DISTANCE <= (self.board_size - 1) and y - CAPATURE_DISTANCE >= 0) and \
-            self.board[x+CAPATURE_DISTANCE][y-CAPATURE_DISTANCE] == self.now_turn:
+        if (x - CAPTURE_DISTANCE >= 0 and y + CAPTURE_DISTANCE <= (self.board_size - 1)) and \
+                self.board[x - CAPTURE_DISTANCE][y + CAPTURE_DISTANCE] == self.now_turn:
+            self.check_and_clear_diagonal_2(x - CAPTURE_DISTANCE + 1, y + CAPTURE_DISTANCE - 1)
+        if (x + CAPTURE_DISTANCE <= (self.board_size - 1) and y - CAPTURE_DISTANCE >= 0) and \
+                self.board[x + CAPTURE_DISTANCE][y - CAPTURE_DISTANCE] == self.now_turn:
             self.check_and_clear_diagonal_2(x + 1, y - 1)
         self.win_by_capture()
 

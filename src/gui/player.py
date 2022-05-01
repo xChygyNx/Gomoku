@@ -18,13 +18,16 @@ class Player:
         self._name.place(relx=.16, rely=rel_y, anchor="w")
         self._catches.place(relx=.7, rely=rel_y, anchor="center")
 
-    def catch(self):
-        self._count.set(self._count.get() + 1)
+    def catch(self, number):
+        self._count.set(self._count.get() + number)
 
-    def undo_catch(self):
+    def undo_catch(self, number):
         cur = self._count.get()
         if cur != 0:
-            self._count.set(self._count.get() - 1)
+            self._count.set(cur - number)
+
+    def catches(self):
+        return self._count.get()
 
     def get_name(self):
         return self._name.cget("text")

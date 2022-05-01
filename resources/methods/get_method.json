@@ -2,6 +2,7 @@
   "method": "make_turn",
   "arguments": {
     "color": "white",
-    "position": "n7"
+    "position": "n7",
+    "captured": ["b1", "b2"]
   }
 }
