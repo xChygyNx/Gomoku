@@ -25,7 +25,7 @@ WHITE_PATTERNS = [W_1, W_2, W_3]
 class Board:
 
     def __init__(self, **kwargs):
-        self.board_size = kwargs.get('board_size') + 1
+        self.board_size = kwargs.get('board_size')
         self.board = [[Color.EMPTY for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.check_init()
 

@@ -1,12 +1,11 @@
 import pytest
 import typing as t
 import random
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 from src.exceptions import BusyCell
 from src.gomoku.structures import Color
 from src.const import BOARD_SIZE
-from src.gomoku import Gomoku
 
 
 def board_size(board: t.List[t.List[Color]]) -> int:
@@ -15,6 +14,7 @@ def board_size(board: t.List[t.List[Color]]) -> int:
         size += len(line)
     return size
 
+
 def board_is_empty(board: t.List[t.List[Color]]) -> bool:
     for line in board:
         for pos in line:
@@ -22,23 +22,24 @@ def board_is_empty(board: t.List[t.List[Color]]) -> bool:
                 return False
     return True
 
+
 def turn_around(board: t.List[t.List[Color]], x: int, y: int, distance: int, color: Color) -> None:
     if x >= distance:
-        board[x-distance][y] = color
+        board[x - distance][y] = color
     if y >= distance:
-        board[x][y-distance] = color
+        board[x][y - distance] = color
     if x >= distance and y >= distance:
-        board[x-distance][y-distance] = color
+        board[x - distance][y - distance] = color
     if y >= distance and x + distance <= BOARD_SIZE:
-            board[x+distance][y-distance] = color
+        board[x + distance][y - distance] = color
     if x + distance <= BOARD_SIZE:
-        board[x+distance][y] = color
+        board[x + distance][y] = color
     if x + distance <= BOARD_SIZE and y + distance <= BOARD_SIZE:
-        board[x+distance][y+distance] = color
+        board[x + distance][y + distance] = color
     if y + distance <= BOARD_SIZE:
-        board[x][y+distance] = color
+        board[x][y + distance] = color
     if x >= distance:
-        board[x-distance][y+distance] = color
+        board[x - distance][y + distance] = color
 
 
 class TestGomoku:
@@ -54,17 +55,17 @@ class TestGomoku:
                          mini_gomoku):
         y = random.randint(1, 7)
         x_int = random.randint(0, 6)
-        x = chr(ord('a') + (x_int))
+        x = chr(ord('a') + x_int)
         pos = x + str(y)
         mini_gomoku.make_turn(position=pos)
 
         assert not board_is_empty(mini_gomoku.board)
-        assert mini_gomoku.board[x_int][y-1] == Color.WHITE
+        assert mini_gomoku.board[x_int][y - 1] == Color.WHITE
         assert mini_gomoku.now_turn == Color.BLACK
 
         with pytest.raises(BusyCell) as error:
             mini_gomoku.make_turn(position=pos)
-        assert error.value.args[0] == f'Cell ({x_int} : {y-1}) is busy'
+        assert error.value.args[0] == f'Cell ({x_int} : {y - 1}) is busy'
 
     def test_turn_around(self,
                          mini_gomoku):
@@ -221,11 +222,11 @@ class TestGomoku:
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
     def test_check_for_horizontal_white_win(self,
-                                  check_diagonal2_mock: MagicMock,
-                                  check_diagonal1_mock: MagicMock,
-                                  check_verticals_mock: MagicMock,
-                                  check_horizontals_mock: MagicMock,
-                                  normal_gomoku):
+                                            check_diagonal2_mock: MagicMock,
+                                            check_diagonal1_mock: MagicMock,
+                                            check_verticals_mock: MagicMock,
+                                            check_horizontals_mock: MagicMock,
+                                            normal_gomoku):
         check_horizontals_mock.return_value = float('inf')
         normal_gomoku.check_state()
         assert check_horizontals_mock.called
@@ -239,11 +240,11 @@ class TestGomoku:
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
     def test_check_for_horizontal_black_win(self,
-                                  check_diagonal2_mock: MagicMock,
-                                  check_diagonal1_mock: MagicMock,
-                                  check_verticals_mock: MagicMock,
-                                  check_horizontals_mock: MagicMock,
-                                  normal_gomoku):
+                                            check_diagonal2_mock: MagicMock,
+                                            check_diagonal1_mock: MagicMock,
+                                            check_verticals_mock: MagicMock,
+                                            check_horizontals_mock: MagicMock,
+                                            normal_gomoku):
         check_horizontals_mock.return_value = -1 * float('inf')
         normal_gomoku.check_state()
         assert check_horizontals_mock.called
@@ -257,11 +258,11 @@ class TestGomoku:
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
     def test_check_for_vertical_white_win(self,
-                                  check_diagonal2_mock: MagicMock,
-                                  check_diagonal1_mock: MagicMock,
-                                  check_verticals_mock: MagicMock,
-                                  check_horizontals_mock: MagicMock,
-                                  normal_gomoku):
+                                          check_diagonal2_mock: MagicMock,
+                                          check_diagonal1_mock: MagicMock,
+                                          check_verticals_mock: MagicMock,
+                                          check_horizontals_mock: MagicMock,
+                                          normal_gomoku):
         check_horizontals_mock.return_value = 5
         check_verticals_mock.return_value = float('inf')
         normal_gomoku.check_state()
@@ -277,11 +278,11 @@ class TestGomoku:
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_1')
     @patch('src.gomoku.gomoku.Gomoku.check_diagonals_2')
     def test_check_for_vertical_black_win(self,
-                                  check_diagonal2_mock: MagicMock,
-                                  check_diagonal1_mock: MagicMock,
-                                  check_verticals_mock: MagicMock,
-                                  check_horizontals_mock: MagicMock,
-                                  normal_gomoku):
+                                          check_diagonal2_mock: MagicMock,
+                                          check_diagonal1_mock: MagicMock,
+                                          check_verticals_mock: MagicMock,
+                                          check_horizontals_mock: MagicMock,
+                                          normal_gomoku):
         check_horizontals_mock.return_value = -5
         check_verticals_mock.return_value = -1 * float('inf')
         normal_gomoku.check_state()

@@ -16,7 +16,7 @@ class BoardGui:
         # board props
         self._board_width = win.winfo_height() - PAD_FROM_WIN
         self._padding = 50
-        self._cell_width = (self._board_width - 2 * self._padding) / self._config.get_board_size()
+        self._cell_width = (self._board_width - 2 * self._padding) / (self._config.get_board_size() - 1)
         self._piece_radius = round(self._cell_width / 3)
         self._board_frame = None
         self._board_canvas = None
@@ -62,7 +62,7 @@ class BoardGui:
         width = self._board_width
         cell_width = self._cell_width
 
-        for n in range(0, self._config.get_board_size() + 1):
+        for n in range(0, self._config.get_board_size()):
             # print lines
             self._board_canvas.create_line(padding, padding + cell_width * n, width - padding, padding + cell_width * n)
             self._board_canvas.create_line(padding + cell_width * n, padding, padding + cell_width * n, width - padding)
@@ -162,7 +162,7 @@ class BoardGui:
         y = BoardGui.round_cell(event.y - self._padding, self._cell_width) + self._padding
 
         position = chr(ord('a') + round((x - self._padding) / self._cell_width)) + \
-            str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
+            str(self._config.get_board_size() - round((y - self._padding) / self._cell_width))
 
         if self.if_pos_in_bound(x, y):
 
