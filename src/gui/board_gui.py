@@ -1,3 +1,4 @@
+import time
 import tkinter as ttk
 import json
 from constants import *
@@ -147,6 +148,11 @@ class BoardGui:
         strike = self._board.get_win_positions()
         self._print_win_strike(strike)
 
+    def print_forbidden_move(self, x, y):
+        p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill="red")
+        time.sleep(.1)
+        self._board_canvas.delete(p)
+
     def make_turn_on_event(self, event):
         """Event on-click on board to set Piece"""
 
@@ -159,6 +165,10 @@ class BoardGui:
             str(self._config.get_board_size() - round((y - self._padding) / self._cell_width) + 1)
 
         if self.if_pos_in_bound(x, y):
+
+            if self._board.is_forbidden_turn_pos(position, self._cur_player.get_color()):
+                self.print_forbidden_move(x, y)
+                return
 
             if self.set_piece(position, x, y, self._cur_player.get_color()):
                 self._send_set_action(position)

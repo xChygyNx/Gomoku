@@ -5,6 +5,22 @@ from src.const import LETTERS
 from src.gomoku.structures import Color
 from src.exceptions import *
 
+# THREE PATTERNS
+# _XXX_
+B_1 = [Color.EMPTY, Color.BLACK, Color.BLACK, Color.BLACK, Color.EMPTY]
+W_1 = [Color.EMPTY, Color.WHITE, Color.WHITE, Color.WHITE, Color.EMPTY]
+
+# _X_XX_
+B_2 = [Color.EMPTY, Color.BLACK, Color.EMPTY, Color.BLACK, Color.BLACK, Color.EMPTY]
+W_2 = [Color.EMPTY, Color.WHITE, Color.EMPTY, Color.WHITE, Color.WHITE, Color.EMPTY]
+
+# _XX_X_
+B_3 = [Color.EMPTY, Color.BLACK, Color.BLACK, Color.EMPTY, Color.BLACK, Color.EMPTY]
+W_3 = [Color.EMPTY, Color.WHITE, Color.WHITE, Color.EMPTY, Color.WHITE, Color.EMPTY]
+
+BLACK_PATTERNS = [B_1, B_2, B_3]
+WHITE_PATTERNS = [W_1, W_2, W_3]
+
 
 class Board:
 
@@ -49,7 +65,7 @@ class Board:
     def checks(self, x: int, y: int):
         self.check_free_pos(x, y)
         self.check_win()
-        self.check_forbidden_turn(x, y)
+        # self.check_forbidden_turn(x, y)
 
     def check_free_pos(self, x: int, y: int):
         if self.board[x][y] != Color.EMPTY:
@@ -116,71 +132,44 @@ class Board:
         coordinates = self.get_coordinates_of_captures(position, color)
         return [self.coordinates_to_position(x, y) for x, y in coordinates]
 
+    def _capture(self, x, y, x_dir, y_dir, color, versa_color):
+        if self.board[y + y_dir * 3][x + x_dir * 3] == color and \
+                self.board[y + y_dir][x + x_dir] == versa_color and \
+                self.board[y + y_dir * 2][x + x_dir * 2] == versa_color:
+            self.board[y + y_dir][x + x_dir] = Color.EMPTY
+            self.board[y + y_dir * 2][x + x_dir * 2] = Color.EMPTY
+            return [(x + x_dir, y + y_dir), (x + x_dir * 2, y + y_dir * 2)]
+        return []
+
     def get_captures(self, x: int, y: int, color: Color) -> List[str]:
         """Returns list of captures pieces. [a1, a2]"""
-        catches = []
+        captures = []
         versa_color = Color.WHITE if color == Color.BLACK else Color.BLACK
 
-        # horizontal left
+        # horizontal left <-> right
         if x > 2:
-            if self.board[y][x - 3] == color and \
-                    self.board[y][x - 1] == versa_color and self.board[y][x - 2] == versa_color:
-                self.board[y][x - 1] = Color.EMPTY
-                self.board[y][x - 2] = Color.EMPTY
-                catches += [(x - 1, y), (x - 2, y)]
-        # horizontal right
+            captures += self._capture(x, y, -1, 0, color, versa_color)
         if x < self.board_size - 3:
-            if self.board[y][x + 3] == color and \
-                    self.board[y][x + 1] == versa_color and self.board[y][x + 2] == versa_color:
-                self.board[y][x + 1] = Color.EMPTY
-                self.board[y][x + 2] = Color.EMPTY
-                catches += [(x + 1, y), (x + 2, y)]
+            captures += self._capture(x, y, 1, 0, color, versa_color)
 
-        # vertical top
+        # vertical top <-> bottom
         if y > 2:
-            if self.board[y - 3][x] == color and \
-                    self.board[y - 1][x] == versa_color and self.board[y - 2][x] == versa_color:
-                self.board[y - 1][x] = Color.EMPTY
-                self.board[y - 2][x] = Color.EMPTY
-                catches += [(x, y - 1), (x, y - 2)]
-        # vertical bottom
+            captures += self._capture(x, y, 0, -1, color, versa_color)
         if y < self.board_size - 3:
-            if self.board[y + 3][x] == color and \
-                    self.board[y + 1][x] == versa_color and self.board[y + 2][x] == versa_color:
-                self.board[y + 1][x] = Color.EMPTY
-                self.board[y + 2][x] = Color.EMPTY
-                catches += [(x, y + 1), (x, y + 2)]
+            captures += self._capture(x, y, 0, 1, color, versa_color)
 
         # diagonal top-left <-> bottom-right
         if x > 2 and y > 2:
-            if self.board[y - 3][x - 3] == color and \
-                    self.board[y - 1][x - 1] == versa_color and self.board[y - 2][x - 2] == versa_color:
-                self.board[y - 1][x - 1] = Color.EMPTY
-                self.board[y - 2][x - 2] = Color.EMPTY
-                catches += [(x - 1, y - 1), (x - 2, y - 2)]
-
+            captures += self._capture(x, y, -1, -1, color, versa_color)
         if x < self.board_size - 3 and y < self.board_size - 3:
-            if self.board[y + 3][x + 3] == color and \
-                    self.board[y + 1][x + 1] == versa_color and self.board[y + 2][x + 2] == versa_color:
-                self.board[y + 1][x + 1] = Color.EMPTY
-                self.board[y + 2][x + 2] = Color.EMPTY
-                catches += [(x + 1, y + 1), (x + 2, y + 2)]
+            captures += self._capture(x, y, 1, 1, color, versa_color)
 
         # diagonal top-right <-> bottom-left
         if x < self.board_size - 3 and y > 2:
-            if self.board[y - 3][x + 3] == color and \
-                    self.board[y - 1][x + 1] == versa_color and self.board[y - 2][x + 2] == versa_color:
-                self.board[y - 1][x + 1] = Color.EMPTY
-                self.board[y - 2][x + 2] = Color.EMPTY
-                catches += [(x + 1, y - 1), (x + 2, y - 2)]
-
+            captures += self._capture(x, y, 1, -1, color, versa_color)
         if x > 2 and y < self.board_size - 3:
-            if self.board[y + 3][x - 3] == color and \
-                    self.board[y + 1][x - 1] == versa_color and self.board[y + 2][x - 2] == versa_color:
-                self.board[y + 1][x - 1] = Color.EMPTY
-                self.board[y + 2][x - 2] = Color.EMPTY
-                catches += [(x - 1, y + 1), (x - 2, y + 2)]
-        return catches
+            captures += self._capture(x, y, -1, 1, color, versa_color)
+        return captures
 
     def _check_win_strike(self, x: int, y: int, seq_color: Color, seq_len: int):
         current_color = self.board[y][x]
@@ -252,9 +241,52 @@ class Board:
             seq_color = current_color
         return seq_color, strike
 
-    def check_forbidden_turn(self, x: int, y: int):
-        pass
-        raise ForbiddenTurn(self.coordinates_to_position(x, y))
+    def is_forbidden_turn_pos(self, pos: str, color: str) -> bool:
+        x, y = self.position_to_coordinates(pos)
+        c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
+        return self.is_forbidden_turn(x, y, c)
+
+    def is_forbidden_turn(self, x: int, y: int, color: Color) -> bool:
+        self.board[y][x] = color
+        three_num = 0
+
+        # horizontal
+        if 0 < x < self.board_size - 1:
+            three_num += self._get_free_threes(x, y, 1, 0, color)
+
+        # vertical
+        if 0 < y < self.board_size - 1:
+            three_num += self._get_free_threes(x, y, 0, 1, color)
+
+        # diagonal top-left <-> bottom-right
+        if 0 < x < self.board_size - 1 and 0 < y < self.board_size - 1:
+            three_num += self._get_free_threes(x, y, 1, 1, color)
+
+        # diagonal top-right <-> bottom-left
+        if 0 < x < self.board_size - 1 and 0 < y < self.board_size - 1:
+            three_num += self._get_free_threes(x, y, 1, -1, color)
+
+        self.board[y][x] = Color.EMPTY
+        return three_num > 1
+
+    def _get_free_threes(self, x: int, y: int, x_dir: int, y_dir: int, color: Color):
+        three_num = 0
+        pattern_list = BLACK_PATTERNS if color == Color.BLACK else WHITE_PATTERNS
+        for pattern in pattern_list:
+            for i in range(1, len(pattern) - 1):
+                three_num += self._check_three(x - i * x_dir, y - i * y_dir, x_dir, y_dir, pattern)
+        return three_num
+
+    def _check_three(self, x, y, x_dir, y_dir, pattern):
+        for i in range(len(pattern)):
+            x_ = x + i * x_dir
+            y_ = y + i * y_dir
+            if -1 < x_ < self.board_size and -1 < y_ < self.board_size \
+                    and self.board[y_][x_] == pattern[i]:
+                continue
+            else:
+                return 0
+        return 1
 
     def __str__(self):
         res = ""
