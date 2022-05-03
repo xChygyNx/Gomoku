@@ -1,10 +1,15 @@
 import time
 import tkinter as ttk
 import json
-from constants import *
 from player import Player
 from piece import Piece
 from board.board import Board
+
+from const.gui_constants import (
+    PAD_FROM_WIN,
+    BACKGROUND_COLOR, BOARD_COLOR,
+    FONT, LABEL_FONT_SIZE, LABEL_FONT
+)
 
 
 class BoardGui:
@@ -147,6 +152,7 @@ class BoardGui:
         self._board_canvas.unbind('<Button-1>')
         strike = self._board.get_win_positions()
         self._print_win_strike(strike)
+        self._send_func(method="end_game", arguments={"winner": f"Player {self._cur_player.get_name()} wins"})
 
     def print_forbidden_move(self, x, y):
         p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill="red")
@@ -171,11 +177,16 @@ class BoardGui:
                 return
 
             if self.set_piece(position, x, y, self._cur_player.get_color()):
-                self._send_set_action(position)
+                capture = self._board.get_positions_of_captures(position, self._cur_player.get_color())
+                if len(capture) != 0:
+                    self.hide_captured(position, capture)
+                    self._cur_player.catch(len(capture))
 
                 if self._board.is_win() or self._cur_player.catches() >= 10:
                     self.print_winner()
-                self._next()
+                else:
+                    self._send_set_action(position, capture)
+                    self._next()
 
     def make_turn(self, position, **kwargs):
         if not self.piece_on_table(position):
@@ -208,7 +219,8 @@ class BoardGui:
             if pos in self._captured.keys():
                 self._cur_player.undo_catch(len(self._captured[pos]))
                 self.show_captured(pos)
-            self._send_delete_action(p.get_pos())
+            self._send_delete_action(p.get_pos(), self._captured.get(pos))
+            self._receive_func()
 
     def _next(self):
         self._moves.set(self._moves.get() + 1)
@@ -263,10 +275,6 @@ class BoardGui:
             self._board_canvas.pack()
             self._pieces.append(Piece(p, position, color))
             self._board.set_piece_by_pos(position, color)
-            capture = self._board.get_positions_of_captures(position, color)
-            if len(capture) != 0:
-                self.hide_captured(position, capture)
-                self._cur_player.catch(len(capture))
             return True
         return False
 
@@ -297,17 +305,23 @@ class BoardGui:
                 piece.uncatch()
                 self._board.set_piece_by_pos(piece.get_pos(), piece.get_color())
 
-    def _send_set_action(self, position):
+    def _send_set_action(self, position, captures=None):
+        if captures is None:
+            captures = []
         arguments = {
             "position": position,
             "color": self._cur_player.get_color(),
+            "captures": captures
         }
         self._send_func(method="make_turn", arguments=arguments)
 
-    def _send_delete_action(self, position):
+    def _send_delete_action(self, position, captures=None):
+        if captures is None:
+            captures = []
         arguments = {
             "position": position,
             "color": self._cur_player.get_color(),
+            "captures": captures
         }
         self._send_func(method="delete", arguments=arguments)
 

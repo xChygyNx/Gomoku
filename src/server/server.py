@@ -55,17 +55,16 @@ class Server:
             data = self.connection.recv(int(os.environ['SERVER_BATCH_SIZE'])).decode(os.environ['SERVER_ENCODING'])
             if not data:
                 break
+            self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
             data = json.loads(data)
             if data.get('method') == 'start':
                 self.gomoku = Gomoku(**data.get('arguments'))
-                self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
 
                 # генерация тестовых данных
-                fill_moves(int(data["arguments"]["board_size"]) + 1)
+                fill_moves(int(data["arguments"]["board_size"]))
             elif data.get('method') == 'end_game':
                 break
             else:
-                self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
                 if data.get('method') in dir(self.gomoku):
                     method = self.gomoku.__getattribute__(data.get('method'))
                     method(**data.get('arguments'))

@@ -3,9 +3,16 @@ import tkinter as ttk
 import webbrowser as wb
 
 from board_gui import BoardGui
-from constants import *
 from game_config import GameConfig
 from client.client import Client
+
+from const.gui_constants import (
+    WIN_HEIGHT, WIN_WIDTH,
+    BACKGROUND_COLOR,
+    FONT, COPYRIGHT_FONT_SIZE, LABEL_FONT_SIZE,
+    LABEL_FONT, BUTTON_FONT, BUTTON_COLOR, BOARD_COLOR,
+    OPTION_MENU_WIDTH, OPTION_MENU_HEIGHT
+)
 
 
 class GomokuGui:

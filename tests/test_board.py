@@ -302,6 +302,19 @@ class TestBoard:
         assert not board.is_forbidden_turn_pos("m12", WHITE)
         assert not board.is_forbidden_turn_pos("f8", BLACK)
 
+    def test_forbidden_doubtful_case(self):
+        """VERY DOUBTFUL CASE"""
+        piecies = {"i10": BLACK, "k10": BLACK, "n10": BLACK,
+                   "i11": WHITE, "k11": WHITE, "n11": WHITE}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_forbidden_turn_pos("l10", BLACK)
+        assert board.is_forbidden_turn_pos("l11", WHITE)
+
+        assert not board.is_forbidden_turn_pos("j10", BLACK)
+        assert not board.is_forbidden_turn_pos("j11", WHITE)
+
     def test_forbidden_turn_all_in_one(self):
         piecies = {"g15": BLACK, "f16": BLACK, "i15": BLACK, "i16": BLACK, "k15": BLACK, "l16": BLACK, "g13": BLACK,
                    "f13": BLACK, "g11": BLACK, "f10": BLACK, "i11": BLACK, "i10": BLACK, "k11": BLACK, "l10": BLACK,
