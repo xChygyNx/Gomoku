@@ -218,10 +218,12 @@ class BoardGui:
             self._switch_player()
 
             pos = p.get_pos()
+            captures = None
             if pos in self._captured.keys():
                 self._cur_player.undo_catch(len(self._captured[pos]))
                 self.show_captured(pos)
-            self._send_delete_action(p.get_pos(), self._captured.get(pos))
+                captures = [c.get_pos() for c in self._captured[pos]]
+            self._send_delete_action(p.get_pos(), captures)
             self._receive_func()
 
     def _next(self):

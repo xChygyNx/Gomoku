@@ -1,24 +1,7 @@
-import typing as t
-from src.gomoku.structures import Color
 from src.board.board import Board
 
 WHITE = "white"
 BLACK = "black"
-
-
-def board_size(board: t.List[t.List[Color]]) -> int:
-    size = 0
-    for line in board:
-        size += len(line)
-    return size
-
-
-def board_is_empty(board: t.List[t.List[Color]]) -> bool:
-    for line in board:
-        for pos in line:
-            if pos.value != 0:
-                return False
-    return True
 
 
 def get_board_with_piecies(piecies: dict, side=19):
