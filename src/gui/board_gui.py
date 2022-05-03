@@ -152,6 +152,8 @@ class BoardGui:
         self._board_canvas.unbind('<Button-1>')
         strike = self._board.get_win_positions()
         self._print_win_strike(strike)
+        self._moves.set(self._moves.get() + 1)
+        self._switch_player()
         self._send_func(method="end_game", arguments={"winner": f"Player {self._cur_player.get_name()} wins"})
 
     def print_forbidden_move(self, x, y):
