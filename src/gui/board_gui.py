@@ -224,7 +224,7 @@ class BoardGui:
 
     def get_coordinates_on_board_by_pos(self, position):
         column = ord(position[0]) - ord('a')
-        row = self._config.get_board_size() - int(position[1:]) + 1
+        row = self._config.get_board_size() - int(position[1:])
 
         x = self._padding + self._cell_width * column
         y = self._padding + self._cell_width * row

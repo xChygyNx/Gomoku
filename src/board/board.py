@@ -53,13 +53,13 @@ class Board:
             raise ValueError(f'Coordinate ({x}, {y}) absence on board')
         return LETTERS[x] + str(self.board_size - y)
 
-    def position_to_coordinates(self, coord: str) -> t.Tuple[int, int]:
+    def position_to_coordinates(self, position: str) -> t.Tuple[int, int]:
         # if re.match('[a-z]', coord[0]) is None or re.match('^\d{1:2}$', coord[1:]) is None:
         #     raise ValueError(f'Coordinate {coord} is invalid')
-        x = LETTERS.find(coord[0])
-        y = self.board_size - int(coord[1:])
+        x = LETTERS.find(position[0])
+        y = self.board_size - int(position[1:])
         if x > self.board_size or y > self.board_size:
-            raise ValueError(f'Coordinate {coord} absence on board')
+            raise ValueError(f'Coordinate {position} absence on board')
         return x, y
 
     def checks(self, x: int, y: int):
@@ -129,6 +129,7 @@ class Board:
         return self.get_captures(x, y, c)
 
     def get_positions_of_captures(self, position: str, color: str) -> List[str]:
+        """Returns list of captures pieces. [a1, a2]"""
         coordinates = self.get_coordinates_of_captures(position, color)
         return [self.coordinates_to_position(x, y) for x, y in coordinates]
 
@@ -142,7 +143,7 @@ class Board:
         return []
 
     def get_captures(self, x: int, y: int, color: Color) -> List[str]:
-        """Returns list of captures pieces. [a1, a2]"""
+        """Returns list of captures pieces. [(x1, y1), (x2, y2), ..]"""
         captures = []
         versa_color = Color.WHITE if color == Color.BLACK else Color.BLACK
 
@@ -184,6 +185,7 @@ class Board:
         return seq_color, seq_len
 
     def get_win_coordinates(self):
+        """Returns list of pairs with coordinates of winning row"""
         strike = []
         # horizontal
         for y in range(len(self.board)):
@@ -242,11 +244,14 @@ class Board:
         return seq_color, strike
 
     def is_forbidden_turn_pos(self, pos: str, color: str) -> bool:
+        """Returns False if after this move creates double-three (or more than double)"""
         x, y = self.position_to_coordinates(pos)
         c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
         return self.is_forbidden_turn(x, y, c)
 
     def is_forbidden_turn(self, x: int, y: int, color: Color) -> bool:
+        """Find free-three in all directions on board
+           Return False if there is more than one free-three"""
         self.board[y][x] = color
         three_num = 0
 
