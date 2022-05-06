@@ -1,4 +1,6 @@
 from src.board.board import Board
+import pytest
+from src.exceptions import BlackPlayerWinException, WhitePlayerWinException
 
 WHITE = "white"
 BLACK = "black"
@@ -63,21 +65,39 @@ class TestBoard:
         piecies = {"g10": BLACK, "h10": BLACK, "i10": BLACK, "j10": BLACK, "k10": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["g10", "h10", "i10", "j10", "k10"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            y, x = coordinates[4][0], coordinates[4][1]
+            board.check_win_horizontals(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        # assert exc.value.win_coordinates == coordinates
+
+        board.check_win_horizontals(x - 1, y)
 
         board.set_piece_by_pos("i10", WHITE)
-        assert not board.is_win()
+        board.check_win_horizontals(x, y)
 
     def test_win_vertical(self):
         piecies = {"g10": BLACK, "g11": BLACK, "g12": BLACK, "g13": BLACK, "g14": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["g10", "g11", "g12", "g13", "g14"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            y, x = coordinates[2][0], coordinates[2][1]
+            board.check_win_verticals(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        # assert exc.value.win_coordinates == coordinates
+
+        board.check_win_horizontals(x, y + 1)
 
         board.set_piece_by_pos("g12", WHITE)
-        assert not board.is_win()
+        board.check_win_horizontals(x, y)
 
     def test_win_diagonal_top_left__bottom_right(self):
         piecies = {"a19": BLACK, "b18": BLACK, "c17": BLACK, "d16": BLACK, "e15": BLACK}
