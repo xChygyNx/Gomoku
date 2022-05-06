@@ -1,7 +1,7 @@
 import typing as t
 from typing import List
 
-from src.const import LETTERS
+from src.const import LETTERS, LENGTH_WIN_SEQUENCE
 from src.gomoku.structures import Color
 from src.exceptions import *
 
@@ -64,64 +64,89 @@ class Board:
 
     def checks(self, x: int, y: int):
         self.check_free_pos(x, y)
-        self.check_win()
+        self.check_win(x, y)
         # self.check_forbidden_turn(x, y)
 
     def check_free_pos(self, x: int, y: int):
         if self.board[x][y] != Color.EMPTY:
             raise BusyCell(x, y)
 
-    def check_win(self):
-        self.check_win_horizontals()
-        self.check_win_verticals()
-        self.check_win_diagonals_1()
-        self.check_win_diagonals_2()
+    def check_win(self, x: int, y: int):
+        self.check_win_horizontals(x, y)
+        self.check_win_verticals(x, y)
+        self.check_win_diagonals_1(x, y)
+        self.check_win_diagonals_2(x, y)
 
-    def is_win(self):
+    def is_win(self, x: int, y: int):
         try:
-            self.check_win()
+            self.check_win(x, y)
         except (WhitePlayerWinException, BlackPlayerWinException):
             return True
         return False
 
-    def check_win_horizontals(self):
-        for y in range(len(self.board)):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x in range(len(self.board)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_horizontals(self, x: int, y: int):
+        check_color = self.board[x][y]
+        seq_len = 0
+        min_boarder = max(0, x - (LENGTH_WIN_SEQUENCE - 1))
+        max_boarder = min(self.board_size, x + LENGTH_WIN_SEQUENCE)
+        for x in range(min_boarder, max_boarder):
+            if self.board[x][y] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                raise exception
 
-    def check_win_verticals(self):
-        for x in range(self.board_size):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for y in range(self.board_size):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_verticals(self, x: int, y: int):
+        check_color = self.board[x][y]
+        seq_len = 0
+        min_boarder = max(0, y - (LENGTH_WIN_SEQUENCE - 1))
+        max_boarder = min(self.board_size, y + LENGTH_WIN_SEQUENCE)
+        for y in range(min_boarder, max_boarder):
+            if self.board[x][y] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                raise exception
 
-    def check_win_diagonals_1(self):
-        for init_v in range(4, self.board_size):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(0, init_v + 1), range(init_v, -1, -1)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_diagonals_1(self, x: int, y: int):
+        check_color = self.board[x][y]
+        distance_to_first_boarder = min(x, y)
+        distance_to_second_boarder = min(self.board_size - x, self.board_size - y)
+        distance_1 = min(distance_to_first_boarder, 4)
+        distance_2 = min(distance_to_second_boarder, 5)
+        seq_len = 0
+        if distance_1 + distance_2 - 1 < LENGTH_WIN_SEQUENCE:
+            return
+        for i in range(-1 * distance_1, distance_2):
+            if self.board[x + i][y + i] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                raise exception
 
-        for init_h in range(1, self.board_size - 4):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
-
-    def check_win_diagonals_2(self):
-        for init_h in range(self.board_size - 5, 0, -1):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
-        for init_v in range(0, self.board_size - 4):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_diagonals_2(self, x: int, y: int):
+        check_color = self.board[x][y]
+        distance_to_first_boarder = min(self.board_size - x, y)
+        distance_to_second_boarder = min(x, self.board_size - y)
+        distance_1 = min(distance_to_first_boarder, 4)
+        distance_2 = min(distance_to_second_boarder, 5)
+        seq_len = 0
+        if distance_1 + distance_2 - 1 < LENGTH_WIN_SEQUENCE:
+            return
+        for i in range(-1 * distance_1, distance_2):
+            if self.board[x + i][y - i] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                raise exception
 
     def get_coordinates_of_captures(self, position: str, color: str):
         x, y = self.position_to_coordinates(position)
