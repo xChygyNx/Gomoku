@@ -108,7 +108,7 @@ class Board:
                 seq_len = 0
             if seq_len == LENGTH_WIN_SEQUENCE:
                 exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
-                exception = exception_type(coordinates=[(x, i) for i in range(y - LENGTH_WIN_SEQUENCE + 1, y + 1)])
+                exception = exception_type(coordinates=[(i, x) for i in range(y - LENGTH_WIN_SEQUENCE + 1, y + 1)])
                 raise exception
 
     def check_win_verticals(self, x: int, y: int):
@@ -125,7 +125,7 @@ class Board:
                 seq_len = 0
             if seq_len == LENGTH_WIN_SEQUENCE:
                 exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
-                exception = exception_type(coordinates=[(i, y) for i in range(x - LENGTH_WIN_SEQUENCE + 1, x + 1)])
+                exception = exception_type(coordinates=[(y, i) for i in range(x - LENGTH_WIN_SEQUENCE + 1, x + 1)])
                 raise exception
 
     def check_win_diagonals_1(self, x: int, y: int):
@@ -139,7 +139,7 @@ class Board:
         seq_len = 0
         if distance_1 + distance_2 - 1 < LENGTH_WIN_SEQUENCE:
             return
-        for i in range(-1 * distance_1, distance_2):
+        for i in range(-1 * distance_1, distance_2 + 1):
             if self.board[x + i][y + i] == check_color:
                 seq_len += 1
             else:
@@ -161,8 +161,8 @@ class Board:
         seq_len = 0
         if distance_1 + distance_2 - 1 < LENGTH_WIN_SEQUENCE:
             return
-        for i in range(-1 * distance_1, distance_2):
-            if self.board[x + i][y - i] == check_color:
+        for i in range(-1 * distance_1, distance_2 + 1):
+            if self.board[x - i][y + i] == check_color:
                 seq_len += 1
             else:
                 seq_len = 0
