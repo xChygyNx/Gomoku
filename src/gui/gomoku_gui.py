@@ -4,9 +4,9 @@ import webbrowser as wb
 
 from board_gui import BoardGui
 from game_config import GameConfig
-from client.client import Client
+from src.client import Client
 
-from const.gui_constants import (
+from src.const.gui_constants import (
     WIN_HEIGHT, WIN_WIDTH,
     BACKGROUND_COLOR,
     FONT, COPYRIGHT_FONT_SIZE, LABEL_FONT_SIZE,

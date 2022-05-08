@@ -3,9 +3,9 @@ import tkinter as ttk
 import json
 from player import Player
 from piece import Piece
-from board.board import Board
+from src.board import Board
 
-from const.gui_constants import (
+from src.const.gui_constants import (
     PAD_FROM_WIN,
     BACKGROUND_COLOR, BOARD_COLOR,
     FONT, LABEL_FONT_SIZE, LABEL_FONT
