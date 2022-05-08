@@ -122,11 +122,20 @@ class TestBoard:
         piecies = {"a1": BLACK, "b2": BLACK, "c3": BLACK, "d4": BLACK, "e5": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["a1", "b2", "c3", "d4", "e5"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            y, x = coordinates[4][0], coordinates[4][1]
+            board.check_win_diagonals_2(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_diagonals_2(x, y - 1)
 
         board.set_piece_by_pos("c3", WHITE)
-        assert not board.is_win()
+        board.check_win_diagonals_2(x, y)
 
     def test_win_diagonal_top_right__bottom_left(self):
         piecies = {"s19": BLACK, "r18": BLACK, "q17": BLACK, "p16": BLACK, "o15": BLACK}
@@ -151,11 +160,20 @@ class TestBoard:
         piecies = {"s1": BLACK, "r2": BLACK, "q3": BLACK, "p4": BLACK, "o5": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["s1", "r2", "q3", "p4", "o5"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            y, x = coordinates[3][0], coordinates[3][1]
+            board.check_win_diagonals_1(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_diagonals_1(x, y + 1)
 
         board.set_piece_by_pos("q3", WHITE)
-        assert not board.is_win()
+        board.check_win_diagonals_1(x, y)
 
     # ##################################################################################
     # ################################### CATCHES ######################################

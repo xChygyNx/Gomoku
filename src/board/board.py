@@ -133,7 +133,7 @@ class Board:
         if check_color == Color.EMPTY:
             return
         distance_to_first_boarder = min(x, y)
-        distance_to_second_boarder = min(self.board_size - x, self.board_size - y)
+        distance_to_second_boarder = min(self.board_size - x - 1, self.board_size - y - 1)
         distance_1 = min(distance_to_first_boarder, 4)
         distance_2 = min(distance_to_second_boarder, 5)
         seq_len = 0
@@ -146,8 +146,8 @@ class Board:
                 seq_len = 0
             if seq_len == LENGTH_WIN_SEQUENCE:
                 exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
-                exception = exception_type(coordinates=[(x + i, y + i)
-                                                        for i in range(i - LENGTH_WIN_SEQUENCE + 1, i + 1)])
+                exception = exception_type(coordinates=[(x + i - k, y + i - k)
+                                                        for k in range(LENGTH_WIN_SEQUENCE)])
                 raise exception
 
     def check_win_diagonals_2(self, x: int, y: int):
@@ -168,8 +168,8 @@ class Board:
                 seq_len = 0
             if seq_len == LENGTH_WIN_SEQUENCE:
                 exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
-                exception = exception_type(coordinates=[(x + i, y - i)
-                                                        for i in range(i - LENGTH_WIN_SEQUENCE + 1, i + 1)])
+                exception = exception_type(coordinates=[(y + i - k, x - i + k)
+                                                        for k in range(LENGTH_WIN_SEQUENCE)])
                 raise exception
 
     def get_coordinates_of_captures(self, position: str, color: str):
