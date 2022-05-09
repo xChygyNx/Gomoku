@@ -143,14 +143,13 @@ class BoardGui:
         self._p1.place(rel_y=.78)
         self._p2.place(rel_y=.88)
 
-    def print_winner(self, **kwargs):
+    def print_winner(self, strike, **kwargs):
         self._winner = ttk.Label(self._win,
                                  text=f"{self._cur_player.get_name()} WINS",
                                  font=(FONT, LABEL_FONT_SIZE, "bold"),
                                  bg=BACKGROUND_COLOR)
         self._winner.place(relx=self.get_info_frame_rel_x(), rely=.825, anchor="center")
         self._board_canvas.unbind('<Button-1>')
-        strike = self._board.get_win_positions()
         self._print_win_strike(strike)
         self._moves.set(self._moves.get() + 1)
         self._switch_player()
@@ -184,8 +183,9 @@ class BoardGui:
                     self.hide_captured(position, capture)
                     self._cur_player.catch(len(capture))
 
-                if self._board.is_win() or self._cur_player.catches() >= 10:
-                    self.print_winner()
+                strike = self._board.get_win_strike(position)
+                if len(strike) != 0 or self._cur_player.catches() >= 10:
+                    self.print_winner(strike)
                 else:
                     self._send_set_action(position, capture)
                     self._next()
@@ -283,9 +283,9 @@ class BoardGui:
         return False
 
     def piece_on_table(self, position):
-        if position in self._pieces:
-            piece = self._pieces[self._pieces.index(position)]
-            return not piece.is_captured()
+        for i in range(len(self._pieces) - 1, -1, -1):
+            if position == self._pieces[i].get_pos():
+                return not self._pieces[i].is_captured()
         return False
 
     def delete_piece(self, piece):
