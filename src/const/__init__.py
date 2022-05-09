@@ -5,3 +5,5 @@ CAPTURE_DISTANCE = 3
 BOARD_SIZE = 19
 
 LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+
+LENGTH_WIN_SEQUENCE = 5

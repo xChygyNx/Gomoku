@@ -190,5 +190,5 @@ class Gomoku:
 
     def reset_board(self) -> None:
         for line in self.board:
-            for pos in line:
-                pos = Color.EMPTY
+            for pos, _ in enumerate(line):
+                line[pos] = Color.EMPTY

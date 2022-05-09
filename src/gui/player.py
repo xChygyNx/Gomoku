@@ -1,6 +1,6 @@
 import tkinter as ttk
 import json
-from const.gui_constants import BOARD_COLOR, LABEL_FONT
+from src.const.gui_constants import BOARD_COLOR, LABEL_FONT
 
 
 class Player:

@@ -1,7 +1,7 @@
 import typing as t
 from typing import List
 
-from src.const import LETTERS
+from src.const import LETTERS, LENGTH_WIN_SEQUENCE
 from src.gomoku.structures import Color
 from src.exceptions import *
 
@@ -36,16 +36,26 @@ class Board:
     def set_piece(self, x: int, y: int, color: Color):
         self.board[y][x] = color
 
-    def set_piece_by_pos(self, position: str, color: str):
-        x, y = self.position_to_coordinates(position)
+    def set_piece_by_pos(self, position: t.Union[str, t.Iterable], color: str):
+        if isinstance(position, str):
+            x, y = self.position_to_coordinates(position)
+        elif isinstance(position, (tuple, list, set)) and len(position) == 2:
+            x, y = position[0], position[1]
+        else:
+            raise TypeError
         c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
         self.set_piece(x, y, c)
 
     def delete_piece(self, x: int, y: int):
         self.board[y][x] = Color.EMPTY
 
-    def delete_piece_by_pos(self, position: str):
-        x, y = self.position_to_coordinates(position)
+    def delete_piece_by_pos(self, position: t.Union[str, t.Iterable]):
+        if isinstance(position, str):
+            x, y = self.position_to_coordinates(position)
+        elif isinstance(position, (tuple, list, set)) and len(position) == 2:
+            x, y = position[0], position[1]
+        else:
+            raise TypeError
         self.delete_piece(x, y)
 
     def coordinates_to_position(self, x: int, y: int) -> str:
@@ -64,64 +74,105 @@ class Board:
 
     def checks(self, x: int, y: int):
         self.check_free_pos(x, y)
-        self.check_win()
+        self.check_win(x, y)
         # self.check_forbidden_turn(x, y)
 
     def check_free_pos(self, x: int, y: int):
-        if self.board[x][y] != Color.EMPTY:
+        if self.board[y][x] != Color.EMPTY:
             raise BusyCell(x, y)
 
-    def check_win(self):
-        self.check_win_horizontals()
-        self.check_win_verticals()
-        self.check_win_diagonals_1()
-        self.check_win_diagonals_2()
+    def check_win(self, x: int, y: int):
+        self.check_win_horizontals(x, y)
+        self.check_win_verticals(x, y)
+        self.check_win_top_left__bottom_right(x, y)
+        self.check_win_top_right__bottom_left(x, y)
 
-    def is_win(self):
+    def get_win_strike(self, position: str):
+        x, y = self.position_to_coordinates(position)
         try:
-            self.check_win()
-        except (WhitePlayerWinException, BlackPlayerWinException):
-            return True
-        return False
+            self.check_win(x, y)
+        except (WhitePlayerWinException, BlackPlayerWinException) as exc:
+            return [self.coordinates_to_position(x, y) for x, y in exc.win_coordinates]
+        return []
 
-    def check_win_horizontals(self):
-        for y in range(len(self.board)):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x in range(len(self.board)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_horizontals(self, x: int, y: int):
+        check_color = self.board[y][x]
+        if check_color == Color.EMPTY:
+            return
+        seq_len = 0
+        min_boarder = max(0, x - (LENGTH_WIN_SEQUENCE - 1))
+        max_boarder = min(self.board_size, x + LENGTH_WIN_SEQUENCE)
+        for x in range(min_boarder, max_boarder):
+            if self.board[y][x] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                exception = exception_type(coordinates=[(i, y) for i in range(x - LENGTH_WIN_SEQUENCE + 1, x + 1)])
+                raise exception
 
-    def check_win_verticals(self):
-        for x in range(self.board_size):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for y in range(self.board_size):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_verticals(self, x: int, y: int):
+        check_color = self.board[y][x]
+        if check_color == Color.EMPTY:
+            return
+        seq_len = 0
+        min_boarder = max(0, y - (LENGTH_WIN_SEQUENCE - 1))
+        max_boarder = min(self.board_size, y + LENGTH_WIN_SEQUENCE)
+        for y in range(min_boarder, max_boarder):
+            if self.board[y][x] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                exception = exception_type(coordinates=[(x, i) for i in range(y - LENGTH_WIN_SEQUENCE + 1, y + 1)])
+                raise exception
 
-    def check_win_diagonals_1(self):
-        for init_v in range(4, self.board_size):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(0, init_v + 1), range(init_v, -1, -1)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_top_left__bottom_right(self, x: int, y: int):
+        check_color = self.board[y][x]
+        if check_color == Color.EMPTY:
+            return
+        distance_to_first_boarder = min(x, y)
+        distance_to_second_boarder = min(self.board_size - x - 1, self.board_size - y - 1)
+        distance_1 = min(distance_to_first_boarder, 4)
+        distance_2 = min(distance_to_second_boarder, 5)
+        seq_len = 0
+        if distance_1 + distance_2 + 1 < LENGTH_WIN_SEQUENCE:
+            return
+        for i in range(-1 * distance_1, distance_2 + 1):
+            if self.board[y + i][x + i] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                exception = exception_type(coordinates=[(x + i - k, y + i - k)
+                                                        for k in range(LENGTH_WIN_SEQUENCE)])
+                raise exception
 
-        for init_h in range(1, self.board_size - 4):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
-
-    def check_win_diagonals_2(self):
-        for init_h in range(self.board_size - 5, 0, -1):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
-        for init_v in range(0, self.board_size - 4):
-            seq_color = Color.EMPTY
-            seq_len = 0
-            for x, y in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
-                seq_color, seq_len = self._check_win_strike(x, y, seq_color, seq_len)
+    def check_win_top_right__bottom_left(self, x: int, y: int):
+        """Check diagonal top-right -> bottom-left"""
+        check_color = self.board[y][x]
+        if check_color == Color.EMPTY:
+            return
+        distance_to_first_boarder = min(self.board_size - x - 1, y)
+        distance_to_second_boarder = min(x, self.board_size - y - 1)
+        distance_1 = min(distance_to_first_boarder, 4)
+        distance_2 = min(distance_to_second_boarder, 5)
+        seq_len = 0
+        if distance_1 + distance_2 + 1 < LENGTH_WIN_SEQUENCE:
+            return
+        for i in range(-1 * distance_1, distance_2 + 1):
+            if self.board[y + i][x - i] == check_color:
+                seq_len += 1
+            else:
+                seq_len = 0
+            if seq_len == LENGTH_WIN_SEQUENCE:
+                exception_type = BlackPlayerWinException if check_color == Color.BLACK else WhitePlayerWinException
+                exception = exception_type(coordinates=[(x - i + k, y + i - k)
+                                                        for k in range(LENGTH_WIN_SEQUENCE)])
+                raise exception
 
     def get_coordinates_of_captures(self, position: str, color: str):
         x, y = self.position_to_coordinates(position)
@@ -172,77 +223,6 @@ class Board:
             captures += self._capture(x, y, -1, 1, color, versa_color)
         return captures
 
-    def _check_win_strike(self, x: int, y: int, seq_color: Color, seq_len: int):
-        current_color = self.board[y][x]
-        if current_color == seq_color and current_color != Color.EMPTY:
-            seq_len += 1
-        else:
-            seq_len = 1
-            seq_color = current_color
-        if seq_len == 5:
-            exception = BlackPlayerWinException if current_color == Color.BLACK else WhitePlayerWinException
-            raise exception()
-        return seq_color, seq_len
-
-    def get_win_coordinates(self):
-        """Returns list of pairs with coordinates of winning row"""
-        strike = []
-        # horizontal
-        for y in range(len(self.board)):
-            seq_color = Color.EMPTY
-            for x in range(len(self.board)):
-                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
-                if len(strike) == 5:
-                    return strike
-        # vertical
-        for x in range(len(self.board)):
-            seq_color = Color.EMPTY
-            for y in range(len(self.board)):
-                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
-                if len(strike) == 5:
-                    return strike
-        # diagonal 1
-        for init_v in range(4, self.board_size):
-            seq_color = Color.EMPTY
-            for x, y in zip(range(0, init_v + 1), range(init_v, -1, -1)):
-                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
-                if len(strike) == 5:
-                    return strike
-        for init_h in range(1, self.board_size - 4):
-            seq_color = Color.EMPTY
-            for x, y in zip(range(init_h, self.board_size), range(self.board_size - 1, init_h - 1, -1)):
-                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
-                if len(strike) == 5:
-                    return strike
-
-        # diagonal 2
-        for init_h in range(self.board_size - 5, 0, -1):
-            seq_color = Color.EMPTY
-            for x, y in zip(range(init_h, self.board_size), range(0, self.board_size - init_h)):
-                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
-                if len(strike) == 5:
-                    return strike
-        for init_v in range(0, self.board_size - 4):
-            seq_color = Color.EMPTY
-            for x, y in zip(range(0, self.board_size - init_v), range(init_v, self.board_size)):
-                seq_color, strike = self._check_next_in_strike(x, y, seq_color, strike)
-                if len(strike) == 5:
-                    return strike
-        return []
-
-    def get_win_positions(self):
-        coordinates = self.get_win_coordinates()
-        return [self.coordinates_to_position(x, y) for x, y in coordinates]
-
-    def _check_next_in_strike(self, x: int, y: int, seq_color: Color, strike: List[tuple]):
-        current_color = self.board[y][x]
-        if current_color == seq_color and current_color != Color.EMPTY:
-            strike.append((x, y))
-        else:
-            strike = [(x, y)]
-            seq_color = current_color
-        return seq_color, strike
-
     def is_forbidden_turn_pos(self, pos: str, color: str) -> bool:
         """Returns False if after this move creates double-three (or more than double)"""
         x, y = self.position_to_coordinates(pos)
@@ -252,6 +232,8 @@ class Board:
     def is_forbidden_turn(self, x: int, y: int, color: Color) -> bool:
         """Find free-three in all directions on board
            Return False if there is more than one free-three"""
+        if self.board[y][x] != Color.EMPTY:
+            return False
         self.board[y][x] = color
         three_num = 0
 

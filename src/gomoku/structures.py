@@ -7,6 +7,17 @@ class Color(Enum):
     BLACK = 2
     EMPTY = 0
 
+    def __str__(self):
+        if self == Color.WHITE:
+            return '0'
+        elif self == Color.BLACK:
+            return 'x'
+        else:
+            return '_'
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class SequencesInfo:
     def __init__(self, *, color_buffer: Color = Color.EMPTY, last_seen_white: int = -1,

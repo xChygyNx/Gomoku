@@ -1,4 +1,7 @@
 from src.board.board import Board
+import pytest
+from src.exceptions import BlackPlayerWinException
+from src.gomoku.structures import Color
 
 WHITE = "white"
 BLACK = "black"
@@ -63,61 +66,115 @@ class TestBoard:
         piecies = {"g10": BLACK, "h10": BLACK, "i10": BLACK, "j10": BLACK, "k10": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["g10", "h10", "i10", "j10", "k10"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            x, y = coordinates[4][0], coordinates[4][1]
+            board.check_win_horizontals(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_horizontals(x, y - 1)
 
         board.set_piece_by_pos("i10", WHITE)
-        assert not board.is_win()
+        board.check_win_horizontals(x, y)
 
     def test_win_vertical(self):
         piecies = {"g10": BLACK, "g11": BLACK, "g12": BLACK, "g13": BLACK, "g14": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["g10", "g11", "g12", "g13", "g14"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            x, y = coordinates[2][0], coordinates[2][1]
+            board.check_win_verticals(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_horizontals(x + 1, y)
 
         board.set_piece_by_pos("g12", WHITE)
-        assert not board.is_win()
+        board.check_win_horizontals(x, y)
 
     def test_win_diagonal_top_left__bottom_right(self):
         piecies = {"a19": BLACK, "b18": BLACK, "c17": BLACK, "d16": BLACK, "e15": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["a19", "b18", "c17", "d16", "e15"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            y, x = coordinates[3][0], coordinates[3][1]
+            board.check_win_top_left__bottom_right(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_top_left__bottom_right(x, y + 1)
 
         board.set_piece_by_pos("c17", WHITE)
-        assert not board.is_win()
+        board.check_win_top_left__bottom_right(x, y)
 
     def test_win_diagonal_bottom_left__top_right(self):
         piecies = {"a1": BLACK, "b2": BLACK, "c3": BLACK, "d4": BLACK, "e5": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["a1", "b2", "c3", "d4", "e5"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            x, y = coordinates[4][0], coordinates[4][1]
+            board.check_win_top_right__bottom_left(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_top_right__bottom_left(x, y - 1)
 
         board.set_piece_by_pos("c3", WHITE)
-        assert not board.is_win()
+        board.check_win_top_right__bottom_left(x, y)
 
     def test_win_diagonal_top_right__bottom_left(self):
         piecies = {"s19": BLACK, "r18": BLACK, "q17": BLACK, "p16": BLACK, "o15": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["s19", "r18", "q17", "p16", "o15"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            x, y = coordinates[3][0], coordinates[3][1]
+            board.check_win_top_right__bottom_left(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_top_right__bottom_left(x, y - 1)
 
         board.set_piece_by_pos("q17", WHITE)
-        assert not board.is_win()
+        board.check_win_top_right__bottom_left(x, y)
 
     def test_win_diagonal_bottom_right__top_left(self):
         piecies = {"s1": BLACK, "r2": BLACK, "q3": BLACK, "p4": BLACK, "o5": BLACK}
         board = get_board_with_piecies(piecies)
 
-        assert board.is_win()
-        assert sorted(board.get_win_positions()) == sorted(piecies.keys())
+        coordinates = []
+        for coord in (board.position_to_coordinates(x) for x in ["s1", "r2", "q3", "p4", "o5"]):
+            coordinates.append(coord)
+
+        with pytest.raises(BlackPlayerWinException) as exc:
+            y, x = coordinates[3][0], coordinates[3][1]
+            board.check_win_top_left__bottom_right(x, y)
+        assert str(exc.value) == 'Black Player Win'
+        assert sorted(exc.value.win_coordinates) == sorted(coordinates)
+
+        board.check_win_top_left__bottom_right(x, y + 1)
 
         board.set_piece_by_pos("q3", WHITE)
-        assert not board.is_win()
+        board.check_win_top_left__bottom_right(x, y)
 
     # ##################################################################################
     # ################################### CATCHES ######################################
@@ -343,3 +400,11 @@ class TestBoard:
         assert not board.is_forbidden_turn_pos("e17", BLACK)
         assert not board.is_forbidden_turn_pos("i17", WHITE)
         assert not board.is_forbidden_turn_pos("m17", BLACK)
+
+    def test_all_positions(self):
+        board = Board(board_size=19)
+        for y in range(board.board_size):
+            for x in range(board.board_size):
+                board.set_piece(x, y, Color.WHITE)
+                board.check_win(x, y)
+                board.set_piece(x, y, Color.EMPTY)
