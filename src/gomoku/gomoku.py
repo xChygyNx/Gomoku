@@ -147,7 +147,6 @@ class Gomoku:
             acc += seq_info.complete_line(self.board_size)
         return acc
 
-
     def check_verticals(self) -> int:
         acc = 0
         seq_info = SequencesInfo()

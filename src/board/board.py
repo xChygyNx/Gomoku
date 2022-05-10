@@ -231,9 +231,13 @@ class Board:
 
     def is_forbidden_turn(self, x: int, y: int, color: Color) -> bool:
         """Find free-three in all directions on board
-           Return False if there is more than one free-three"""
+           Return False if there is more than one free-three, or position in capture"""
+        return self.get_num_of_free_trees(x, y, color) > 1
+
+    def get_num_of_free_trees(self, x: int, y: int, color: Color) -> int:
+        """Return number of free-threes"""
         if self.board[y][x] != Color.EMPTY:
-            return False
+            return 0
         self.board[y][x] = color
         three_num = 0
 
@@ -254,7 +258,7 @@ class Board:
             three_num += self._get_free_threes(x, y, 1, -1, color)
 
         self.board[y][x] = Color.EMPTY
-        return three_num > 1
+        return three_num
 
     def _get_free_threes(self, x: int, y: int, x_dir: int, y_dir: int, color: Color):
         three_num = 0
