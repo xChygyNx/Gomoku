@@ -21,6 +21,14 @@ W_3 = [Color.EMPTY, Color.WHITE, Color.WHITE, Color.EMPTY, Color.WHITE, Color.EM
 BLACK_PATTERNS = [B_1, B_2, B_3]
 WHITE_PATTERNS = [W_1, W_2, W_3]
 
+BLACK_CATCH_1 = [Color.BLACK, Color.WHITE, Color.EMPTY, Color.BLACK]
+BLACK_CATCH_2 = [Color.BLACK, Color.EMPTY, Color.WHITE, Color.BLACK]
+WHITE_CATCH_1 = [Color.WHITE, Color.EMPTY, Color.BLACK, Color.WHITE]
+WHITE_CATCH_2 = [Color.WHITE, Color.BLACK, Color.EMPTY, Color.WHITE]
+
+BLACK_CATCH = [BLACK_CATCH_1, BLACK_CATCH_2]
+WHITE_CATCH = [WHITE_CATCH_1, WHITE_CATCH_2]
+
 
 class Board:
 
@@ -227,7 +235,7 @@ class Board:
         """Returns False if after this move creates double-three (or more than double)"""
         x, y = self.position_to_coordinates(pos)
         c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
-        return self.is_forbidden_turn(x, y, c)
+        return self.is_forbidden_turn(x, y, c) or self.is_possible_capture(x, y, c)
 
     def is_forbidden_turn(self, x: int, y: int, color: Color) -> bool:
         """Find free-three in all directions on board
@@ -278,6 +286,49 @@ class Board:
             else:
                 return 0
         return 1
+
+    def is_possible_capture_pos(self, pos: str, color: str):
+        x, y = self.position_to_coordinates(pos)
+        c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
+        return self.is_possible_capture(x, y, c)
+
+    def is_possible_capture(self, x: int, y: int, color: Color):
+
+        patterns = BLACK_CATCH if color == Color.WHITE else WHITE_CATCH
+
+        # horizontal
+        if self._is_patterns(x - 1, y, 1, 0, patterns) or self._is_patterns(x - 2, y, 1, 0, patterns):
+            return True
+
+        # # vertical
+        if self._is_patterns(x, y - 1, 0, 1, patterns) or self._is_patterns(x, y - 2, 0, 1, patterns):
+            return True
+
+        # diagonal top-left -> bottom-right
+        if self._is_patterns(x - 1, y - 1, 1, 1, patterns) or self._is_patterns(x - 2, y - 2, 1, 1, patterns):
+            return True
+
+        # diagonal top-right -> bottom-left
+        if self._is_patterns(x + 1, y - 1, -1, 1, patterns) or self._is_patterns(x + 2, y - 2, -1, 1, patterns):
+            return True
+        return False
+
+    def _is_patterns(self, x: int, y: int, x_dir: int, y_dir: int, patterns):
+        for pattern in patterns:
+            if self._is_pattern(x, y, x_dir, y_dir, pattern):
+                return True
+        return False
+
+    def _is_pattern(self, x: int, y: int, x_dir: int, y_dir: int, pattern):
+        for i in range(0, len(pattern)):
+            x_ = x + i * x_dir
+            y_ = y + i * y_dir
+            if -1 < x_ < self.board_size and -1 < y_ < self.board_size \
+                    and self.board[y_][x_] == pattern[i]:
+                continue
+            else:
+                return False
+        return True
 
     def __str__(self):
         res = ""

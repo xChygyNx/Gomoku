@@ -401,6 +401,126 @@ class TestBoard:
         assert not board.is_forbidden_turn_pos("i17", WHITE)
         assert not board.is_forbidden_turn_pos("m17", BLACK)
 
+    def test_possible_horizontal_capture_left(self):
+
+        piecies = {"a9": BLACK, "b9": WHITE, "d9": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("c9", WHITE)
+        assert not board.is_possible_capture_pos("c9", BLACK)
+
+        piecies = {"a9": BLACK, "c9": WHITE, "d9": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("b9", WHITE)
+        assert not board.is_possible_capture_pos("b9", BLACK)
+
+    def test_possible_horizontal_capture_right(self):
+
+        piecies = {"s9": BLACK, "r9": WHITE, "p9": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("q9", WHITE)
+        assert not board.is_possible_capture_pos("q9", BLACK)
+
+        piecies = {"s9": BLACK, "q9": WHITE, "p9": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("r9", WHITE)
+        assert not board.is_possible_capture_pos("r9", BLACK)
+
+    def test_possible_vertical_capture_top(self):
+
+        piecies = {"a19": BLACK, "a18": WHITE, "a16": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("a17", WHITE)
+        assert not board.is_possible_capture_pos("a17", BLACK)
+
+        piecies = {"a19": BLACK, "a17": WHITE, "a16": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("a18", WHITE)
+        assert not board.is_possible_capture_pos("a18", BLACK)
+
+    def test_possible_vertical_capture_bottom(self):
+
+        piecies = {"a1": BLACK, "a2": WHITE, "a4": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("a3", WHITE)
+        assert not board.is_possible_capture_pos("a3", BLACK)
+
+        piecies = {"a1": BLACK, "a3": WHITE, "a4": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("a2", WHITE)
+        assert not board.is_possible_capture_pos("a2", BLACK)
+
+    def test_possible_diagonal_capture_top_left(self):
+
+        piecies = {"a19": BLACK, "b18": WHITE, "d16": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("c17", WHITE)
+        assert not board.is_possible_capture_pos("c17", BLACK)
+
+        piecies = {"a19": BLACK, "c17": WHITE, "d16": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("b18", WHITE)
+        assert not board.is_possible_capture_pos("b18", BLACK)
+
+    def test_possible_diagonal_capture_bottom_right(self):
+
+        piecies = {"s1": BLACK, "r2": WHITE, "p4": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("q3", WHITE)
+        assert not board.is_possible_capture_pos("q3", BLACK)
+
+        piecies = {"s1": BLACK, "q3": WHITE, "p4": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("r2", WHITE)
+        assert not board.is_possible_capture_pos("r2", BLACK)
+
+    def test_possible_diagonal_capture_bottom_left(self):
+
+        piecies = {"a1": BLACK, "b2": WHITE, "d4": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("c3", WHITE)
+        assert not board.is_possible_capture_pos("c3", BLACK)
+
+        piecies = {"a1": BLACK, "c3": WHITE, "d4": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("b2", WHITE)
+        assert not board.is_possible_capture_pos("b2", BLACK)
+
+    def test_possible_diagonal_capture_top_right(self):
+
+        piecies = {"s19": BLACK, "r18": WHITE, "p16": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("q17", WHITE)
+        assert not board.is_possible_capture_pos("q17", BLACK)
+
+        piecies = {"s19": BLACK, "q17": WHITE, "p16": BLACK}
+        board = get_board_with_piecies(piecies)
+
+        assert board.is_possible_capture_pos("r18", WHITE)
+        assert not board.is_possible_capture_pos("r18", BLACK)
+
     def test_all_positions(self):
         board = Board(board_size=19)
         for y in range(board.board_size):
