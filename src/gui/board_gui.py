@@ -1,8 +1,8 @@
 import time
 import tkinter as ttk
 import json
-from player import Player
-from piece import Piece
+from src.gui.player import Player
+from src.gui.piece import Piece
 from src.board import Board
 
 from src.const.gui_constants import (
@@ -14,7 +14,7 @@ from src.const.gui_constants import (
 
 class BoardGui:
 
-    def __init__(self, win, config, send_func, receive_func):
+    def __init__(self, win, config, send_func):
         self._win = win
         self._config = config
 
@@ -32,8 +32,9 @@ class BoardGui:
         self._turn = ttk.StringVar()
         self._moves = ttk.IntVar()
         self._moves.set(0)
-        self.time_spend = None
-        self.move_time = time.perf_counter()
+        self._time_spend_label = None
+        self._time_spend = time.perf_counter()
+        self._callback_id = None
         self._winner = None
         self._win_strike = []
 
@@ -47,7 +48,6 @@ class BoardGui:
         self._hints = []
 
         self._send_func = send_func
-        self._receive_func = receive_func
 
     def print_board(self):
         """Initialize game board"""
@@ -130,8 +130,8 @@ class BoardGui:
         time_l = ttk.Label(self._info_frame, text='Time:', font=font_u, bg=BOARD_COLOR)
         time_l.place(relx=.1, rely=.61, anchor="w")
 
-        self.time_spend = ttk.Label(self._info_frame, text=self.move_time, font=LABEL_FONT, bg=BOARD_COLOR)
-        self.time_spend.place(relx=.7, rely=.61, anchor="center")
+        self._time_spend_label = ttk.Label(self._info_frame, text=self._time_spend, font=LABEL_FONT, bg=BOARD_COLOR)
+        self._time_spend_label.place(relx=.7, rely=.61, anchor="center")
 
         catches_l = ttk.Label(self._info_frame, text='Catches:', font=font_u, bg=BOARD_COLOR)
         catches_l.place(relx=.1, rely=.75, anchor="w")
@@ -154,21 +154,25 @@ class BoardGui:
         self._show_move_time()
 
     def _show_move_time(self):
-        showtime = f"{time.perf_counter() - self.move_time:0.2f}"
-        self.time_spend.config(text=showtime)
-        self.time_spend.after(75, self._show_move_time)
+        showtime = f"{time.perf_counter() - self._time_spend:0.2f}"
+        self._time_spend_label.config(text=showtime)
+        self._callback_id = self._time_spend_label.after(75, self._show_move_time)
+
+    def _stop_move_time(self):
+        self._time_spend_label.after_cancel(self._callback_id)
+        self._time_spend_label.config(text="0.00")
 
     def print_winner(self, strike, **kwargs):
-        self._winner = ttk.Label(self._win,
-                                 text=f"{self._cur_player.get_name()} WINS",
-                                 font=(FONT, LABEL_FONT_SIZE, "bold"),
-                                 bg=BACKGROUND_COLOR)
-        self._winner.place(relx=self.get_info_frame_rel_x(), rely=.825, anchor="center")
+        self._winner = ttk.Label(self._info_frame, text="Winner",
+                                 font=[FONT, LABEL_FONT_SIZE, "underline"],
+                                 bg=BOARD_COLOR)
+        self._winner.place(relx=.1, rely=.47, anchor="w")
         self._board_canvas.unbind('<Button-1>')
         self._print_win_strike(strike)
         self._moves.set(self._moves.get() + 1)
         self._send_func(method="winner", arguments={"winner": f"Player {self._cur_player.get_name()} wins"})
         self._switch_player()
+        self._stop_move_time()
 
     def print_forbidden_move(self, x, y):
         p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill="red")
@@ -213,7 +217,7 @@ class BoardGui:
                 if len(strike) != 0 or self._cur_player.catches() >= 10:
                     self.print_winner(strike)
                 else:
-                    self._send_set_action(position, capture)
+                    self._send_method("make_turn", position, capture)
                     self._next()
 
     def make_turn(self, position, **kwargs):
@@ -234,12 +238,13 @@ class BoardGui:
         else:
             self._cur_player = self._p1
         self._turn.set(self._cur_player.get_name())
-        self.move_time = time.perf_counter()
+        self._time_spend = time.perf_counter()
         self._info_frame.update_idletasks()
 
     def back(self):
         self.delete_hints()
         if self._winner is not None:
+            self._show_move_time()
             self._delete_win_strike()
         if self._moves.get() != 0:
             p = next(self._pieces[i] for i in range(len(self._pieces) - 1, -1, -1) if not self._pieces[i].is_captured())
@@ -253,18 +258,11 @@ class BoardGui:
                 self._cur_player.undo_catch(len(self._captured[pos]))
                 self.show_captured(pos)
                 captures = [c.get_pos() for c in self._captured[pos]]
-            self._send_delete_action(p.get_pos(), captures)
-            # self._receive_func()
+            self._send_method("back", p.get_pos(), captures)
 
     def _next(self):
         self._moves.set(self._moves.get() + 1)
         self._switch_player()
-        if self._config.get_mode() == "PvP" or self._cur_player.get_name().startswith("AI"):
-            res = self._receive_func()
-            if res is not None:
-                data = json.loads(res)
-                method = self.__getattribute__(data["method"])
-                method(**data['arguments'])
 
     def if_pos_in_bound(self, x, y):
         return self._padding / 2 < x < self._board_width - self._padding / 2 and \
@@ -341,7 +339,7 @@ class BoardGui:
                 piece.uncatch()
                 self._board.set_piece_by_pos(piece.get_pos(), piece.get_color())
 
-    def _send_set_action(self, position, captures=None):
+    def _send_method(self, method_name, position, captures=None):
         if captures is None:
             captures = []
         arguments = {
@@ -349,17 +347,7 @@ class BoardGui:
             "color": self._cur_player.get_color(),
             "captures": captures
         }
-        self._send_func(method="make_turn", arguments=arguments)
-
-    def _send_delete_action(self, position, captures=None):
-        if captures is None:
-            captures = []
-        arguments = {
-            "position": position,
-            "color": self._cur_player.get_color(),
-            "captures": captures
-        }
-        self._send_func(method="delete", arguments=arguments)
+        self._send_func(method=method_name, arguments=arguments)
 
     def get_cur_player_name(self):
         return self._cur_player.get_name()

@@ -7,7 +7,6 @@ import json
 from src.gomoku import Gomoku
 import time
 
-
 dotenv.load_dotenv()
 
 MOVES = []
@@ -55,7 +54,6 @@ class Server:
             data = self.connection.recv(int(os.environ['SERVER_BATCH_SIZE'])).decode(os.environ['SERVER_ENCODING'])
             if not data:
                 break
-            self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
             data = json.loads(data)
             if data.get('method') == 'start':
                 print(f"Starts new game with config: {data.get('arguments')}")
@@ -65,6 +63,7 @@ class Server:
                 fill_moves(int(data["arguments"]["board_size"]))
             elif data.get('method') == 'end_game':
                 print(f"Game ends: {data.get('arguments')}")
+                self.connection.send(json.dumps(data).encode(os.environ['SERVER_ENCODING']))
                 break
             else:
                 if data.get('method') in dir(self.gomoku):

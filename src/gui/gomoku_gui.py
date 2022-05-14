@@ -1,9 +1,13 @@
 import json
 import tkinter as ttk
 import webbrowser as wb
+import argparse
+import dotenv
+import os
+from threading import Thread
 
-from board_gui import BoardGui
-from game_config import GameConfig
+from src.gui.board_gui import BoardGui
+from src.gui.game_config import GameConfig
 from src.client import Client
 
 from src.const.gui_constants import (
@@ -23,6 +27,7 @@ class GomokuGui:
         self._board = None
         self._info_panel = None
         self._client = client
+        self._listener = None
 
         self._root.title('Gomoku')
         self._root.config(bg=BACKGROUND_COLOR)
@@ -36,6 +41,8 @@ class GomokuGui:
         try:
             self._client.connect_to_server()
             self._root.protocol("WM_DELETE_WINDOW", self._end_game)
+            self._listener = Thread(target=self._listen_server)
+            self._listener.start()
         except ConnectionRefusedError:
             self._client = None
             print("Can't connect to server. Game available only PvP mode")
@@ -151,9 +158,7 @@ class GomokuGui:
         for widget in self._root.winfo_children():
             widget.destroy()
 
-        self._board = BoardGui(self._root, config,
-                               self._send_message_from_board(),
-                               self._receive_message_in_board())
+        self._board = BoardGui(self._root, config, self._send_message_from_board())
         self._board.print_board()
         self.send_message(method="start", arguments=self._config.__dict__)
 
@@ -175,7 +180,7 @@ class GomokuGui:
 
     def _end_game(self):
         self.send_message("end_game", {})
-        self._client.connection.close()
+        self._listener.join()
         self._root.destroy()
 
     def restart_game(self):
@@ -183,12 +188,26 @@ class GomokuGui:
             widget.destroy()
         self.print_config()
 
+    def _listen_server(self):
+        for message in self._client.get_data():
+            data = json.loads(message)
+            print(f'Client receive:\n {data}')
+            method_name = data.get("method")
+            arguments = data.get("arguments")
+            if method_name == "end_game":
+                self._client.connection.close()
+                break
+            elif method_name in dir(self._board):
+                method = self._board.__getattribute__(method_name)
+                method(**arguments)
+            else:
+                print(f"Unresolved method {method_name} with arguments {arguments}")
+
     def send_message(self, method, arguments: dict):
         """Send player action to server """
         message = create_message(method, arguments)
         if self._client is not None:
             self._client.send_data(message)
-            self._client.receive_response()
         else:
             print(message)
 
@@ -198,17 +217,8 @@ class GomokuGui:
             message = create_message(method, arguments)
             if self._client is not None:
                 self._client.send_data(message)
-                self._client.receive_response()
             else:
                 print(message)
-        return send
-
-    def _receive_message_in_board(self):
-        def send():
-            if self._client is not None:
-                return self._client.receive_response()
-            else:
-                return None
         return send
 
 
@@ -221,6 +231,12 @@ def create_message(method, arguments):
 
 
 if __name__ == '__main__':
-    client = Client()
+    dotenv.load_dotenv()
+    parser = argparse.ArgumentParser(description="Gomoku game")
+    parser.add_argument("--host", nargs="?", type=str, default=os.environ['HOST'], help="Server address")
+    parser.add_argument("--port", nargs="?", type=str, default=os.environ['PORT'], help="Server port")
+    args = parser.parse_args()
+
+    client = Client(host=args.host, port=args.port)
     gui = GomokuGui(WIN_WIDTH, WIN_HEIGHT, client=client)
     gui.start()

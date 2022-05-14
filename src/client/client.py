@@ -6,8 +6,6 @@ import time
 import logging
 import typing as t
 
-from src.gomoku.gomoku import Gomoku
-
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.getcwd()))
 RESOURCES = os.path.join(PROJECT_DIR, "resources", "methods")
@@ -18,10 +16,21 @@ logger = logging.getLogger(__name__)
 
 
 class Client:
-    def __init__(self):
+    def __init__(self,
+                 host=os.environ['HOST'],
+                 port=os.environ['PORT'],
+                 client_encoding=os.environ['CLIENT_ENCODING'],
+                 client_batch_size=os.environ['CLIENT_BATCH_SIZE'],
+                 server_encoding=os.environ['CLIENT_ENCODING'],
+                 server_batch_size=os.environ['CLIENT_BATCH_SIZE']
+                 ):
+        self._host: str = host
+        self._port: int = int(port)
+        self._client_encoding: str = client_encoding
+        self._client_batch_size = int(client_batch_size)
+        self._server_encoding: str = server_encoding
+        self._server_batch_size = int(server_batch_size)
         self._connection = None
-        self.address = None
-        self.gomoku: Gomoku = None
 
     @property
     def connection(self):
@@ -31,17 +40,20 @@ class Client:
         return self._connection
 
     def connect_to_server(self) -> None:
-        self.connection.connect((socket.gethostbyname(os.environ['HOST']), int(os.environ['PORT'])))
+        self.connection.connect((socket.gethostbyname(self._host), self._port))
 
-    def send_data(self, data: str, encode: str = os.environ['CLIENT_ENCODING']) -> None:
-        self.connection.send(data.encode(encode))
-        print(f'Client send:\n {json.loads(data)}')
+    def send_data(self, message: str) -> None:
+        self.connection.send(message.encode(self._client_encoding))
+        print(f'Client send:\n {json.loads(message)}')
 
-    def receive_response(self, batch_size: int = int(os.environ['CLIENT_BATCH_SIZE']),
-                         decode: str = os.environ['CLIENT_ENCODING']) -> str:
-        response = self.connection.recv(batch_size).decode(decode)
-        print(f'Client receive:\n {response}')
-        return response
+    def receive_response(self) -> str:
+        message = self.connection.recv(self._server_batch_size).decode(self._server_encoding)
+        print(f'Client receive:\n {message}')
+        return message
+
+    def get_data(self) -> t.Generator:
+        while True:
+            yield self.connection.recv(self._server_batch_size).decode(self._server_encoding)
 
 
 if __name__ == '__main__':
