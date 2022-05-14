@@ -1,6 +1,4 @@
 {
   "method": "end_game",
-  "arguments": {
-    "winner": "Player"
-  }
+  "arguments": {}
 }

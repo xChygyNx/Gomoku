@@ -174,6 +174,7 @@ class GomokuGui:
         back.place(relx=self._board.get_info_frame_rel_x(), rely=.95, anchor="center")
 
     def _end_game(self):
+        self.send_message("end_game", {})
         self._client.connection.close()
         self._root.destroy()
 

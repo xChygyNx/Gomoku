@@ -42,6 +42,7 @@ class BoardGui:
         self._pieces = []
         # p2: [piece1, piece2]
         self._captured = dict()
+        self._hints = []
 
         self._send_func = send_func
         self._receive_func = receive_func
@@ -152,19 +153,30 @@ class BoardGui:
         self._board_canvas.unbind('<Button-1>')
         self._print_win_strike(strike)
         self._moves.set(self._moves.get() + 1)
+        self._send_func(method="winner", arguments={"winner": f"Player {self._cur_player.get_name()} wins"})
         self._switch_player()
-        self._send_func(method="end_game", arguments={"winner": f"Player {self._cur_player.get_name()} wins"})
 
     def print_forbidden_move(self, x, y):
         p = BoardGui.create_circle(self._board_canvas, x, y, self._piece_radius, fill="red")
         time.sleep(.1)
         self._board_canvas.delete(p)
 
+    def print_hints(self, **kwargs):
+        for hint in kwargs.get("hints"):
+            x, y = self.get_coordinates_on_board_by_pos(hint)
+            h = self.create_circle(self._board_canvas, x, y, self._piece_radius * .4,
+                                   fill="red", width=0)
+            self._hints.append(h)
+
+    def delete_hints(self):
+        for _ in range(len(self._hints)):
+            self._board_canvas.delete(self._hints.pop())
+
     def make_turn_on_event(self, event):
         """Event on-click on board to set Piece"""
-
         if self._cur_player.get_name().startswith("AI"):
             return
+        self.delete_hints()
         x = BoardGui.round_cell(event.x - self._padding, self._cell_width) + self._padding
         y = BoardGui.round_cell(event.y - self._padding, self._cell_width) + self._padding
 
@@ -198,6 +210,8 @@ class BoardGui:
                 self.set_piece(position, x, y, self._cur_player.get_color())
                 if "captured" in kwargs.keys():
                     self.hide_captured(position, kwargs["captured"])
+                if "hints" in kwargs.keys():
+                    self.print_hints(**kwargs)
                 self._next()
 
     def _switch_player(self):
@@ -209,6 +223,7 @@ class BoardGui:
         self._info_frame.update_idletasks()
 
     def back(self):
+        self.delete_hints()
         if self._winner is not None:
             self._delete_win_strike()
         if self._moves.get() != 0:
@@ -224,15 +239,17 @@ class BoardGui:
                 self.show_captured(pos)
                 captures = [c.get_pos() for c in self._captured[pos]]
             self._send_delete_action(p.get_pos(), captures)
-            self._receive_func()
+            # self._receive_func()
 
     def _next(self):
         self._moves.set(self._moves.get() + 1)
         self._switch_player()
-        if self._cur_player.get_name().startswith("AI"):
-            data = json.loads(self._receive_func())
-            method = self.__getattribute__(data["method"])
-            method(**data['arguments'])
+        if self._config.get_mode() == "PvP" or self._cur_player.get_name().startswith("AI"):
+            res = self._receive_func()
+            if res is not None:
+                data = json.loads(res)
+                method = self.__getattribute__(data["method"])
+                method(**data['arguments'])
 
     def if_pos_in_bound(self, x, y):
         return self._padding / 2 < x < self._board_width - self._padding / 2 and \

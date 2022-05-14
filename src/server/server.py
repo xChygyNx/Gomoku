@@ -58,24 +58,39 @@ class Server:
             self.connection.send('ok'.encode(os.environ['SERVER_ENCODING']))
             data = json.loads(data)
             if data.get('method') == 'start':
+                print(f"Starts new game with config: {data.get('arguments')}")
                 self.gomoku = Gomoku(**data.get('arguments'))
 
                 # генерация тестовых данных
                 fill_moves(int(data["arguments"]["board_size"]))
             elif data.get('method') == 'end_game':
+                print(f"Game ends: {data.get('arguments')}")
                 break
             else:
                 if data.get('method') in dir(self.gomoku):
                     method = self.gomoku.__getattribute__(data.get('method'))
                     method(**data.get('arguments'))
 
-                    # отправляем рандомный неповторяющийся ответ
                     time.sleep(0.5)
-                    remove_move(data["arguments"]["position"])
-                    answer = {
-                        "method": "make_turn",
-                        "arguments": {"position": get_random_move(), "color": "white"}
-                    }
+                    # отправляем рандомный неповторяющийся ответ
+
+                    if self.gomoku.mode == "PvE":
+                        remove_move(data["arguments"]["position"])
+                        answer = {
+                            "method": "make_turn",
+                            "arguments": {
+                                "position": get_random_move(),
+                                "color": "white",
+                                "hints": [random.choice(MOVES) for _ in range(3)]
+                            }
+                        }
+                    else:
+                        answer = {
+                            "method": "print_hints",
+                            "arguments": {
+                                "hints": [random.choice(MOVES) for _ in range(3)]
+                            }
+                        }
                     arguments = json.dumps(answer)
                     self.connection.send(arguments.encode(os.environ['SERVER_ENCODING']))
                 else:
@@ -95,4 +110,3 @@ if __name__ == '__main__':
         server = Server()
         server.accept_connection()
         server.listen_connection()
-        print('Thanks')

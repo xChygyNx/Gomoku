@@ -3,6 +3,7 @@
   "arguments": {
     "color": "white",
     "position": "n7",
-    "captured": ["b1", "b2"]
+    "captured": ["b1", "b2"],
+    "hints": ["a1"]
   }
 }
