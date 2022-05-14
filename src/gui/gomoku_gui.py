@@ -163,7 +163,7 @@ class GomokuGui:
                           bg=BUTTON_COLOR, bd=4,
                           cursor="hand2")
         back.configure(command=self._board.back)
-        back.place(relx=self._board.get_info_frame_rel_x(), rely=.7, anchor="center")
+        back.place(relx=self._board.get_info_frame_rel_x(), rely=.8, anchor="center")
 
         back = ttk.Button(self._root, text="Restart",
                           font=BUTTON_FONT,
@@ -171,7 +171,7 @@ class GomokuGui:
                           bg=BUTTON_COLOR, bd=4,
                           cursor="hand2")
         back.configure(command=self.restart_game)
-        back.place(relx=self._board.get_info_frame_rel_x(), rely=.95, anchor="center")
+        back.place(relx=self._board.get_info_frame_rel_x(), rely=.9, anchor="center")
 
     def _end_game(self):
         self.send_message("end_game", {})
