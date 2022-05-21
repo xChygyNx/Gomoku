@@ -1,5 +1,5 @@
 import typing as t
-from typing import List
+from typing import List, Tuple
 
 from src.const import LETTERS, LENGTH_WIN_SEQUENCE
 from src.gomoku.structures import Color
@@ -235,12 +235,12 @@ class Board:
         """Returns False if after this move creates double-three (or more than double)"""
         x, y = self.position_to_coordinates(pos)
         c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
-        return self.is_forbidden_turn(x, y, c) or self.is_possible_capture(x, y, c)
+        return self.is_forbidden_turn(x, y, c)
 
     def is_forbidden_turn(self, x: int, y: int, color: Color) -> bool:
         """Find free-three in all directions on board
            Return False if there is more than one free-three, or position in capture"""
-        return self.get_num_of_free_trees(x, y, color) > 1
+        return self.get_num_of_free_trees(x, y, color) > 1 or self.is_possible_capture(x, y, color)
 
     def get_num_of_free_trees(self, x: int, y: int, color: Color) -> int:
         """Return number of free-threes"""
@@ -329,6 +329,49 @@ class Board:
             else:
                 return False
         return True
+
+    def check_win_strike_to_capture_by_pos(self, pos_strike: List[str], color: str) -> bool:
+        strike = [(self.position_to_coordinates(pos)) for pos in pos_strike]
+        c = Color.WHITE if color.upper() == Color.WHITE.name else Color.BLACK
+        return self.check_win_strike_to_capture(strike, c)
+
+    def check_win_strike_to_capture(self, strike: List[Tuple[int, int]], color: Color) -> bool:
+        versa_color = Color.BLACK if color == Color.WHITE else Color.WHITE
+        area = self.create_area_of_win_strike(strike)
+        for x, y in area:
+            if not self.is_forbidden_turn(x, y, versa_color):
+                self.board[y][x] = versa_color
+                captures = self.get_captures(x, y, versa_color)
+                if len(captures) != 0:
+                    for x_, y_ in captures:
+                        self.board[y_][x_] = color
+                    self.board[y][x] = Color.EMPTY
+                    return True
+                self.board[y][x] = Color.EMPTY
+        return False
+
+    def create_area_of_win_strike(self, strike):
+        area = []
+        y_dir = strike[1][0] - strike[0][0]
+        x_dir = strike[1][1] - strike[0][1]
+        x_f, y_f = strike[0]
+        x_l, y_l = strike[4]
+        new_strike = [(x_f - 2 * y_dir, y_f - 2 * x_dir), (x_f - 1 * y_dir, y_f - 1 * x_dir)] \
+            + strike + [(x_l + 2 * y_dir, y_l + 2 * x_dir), (x_l + 1 * y_dir, y_l + 1 * x_dir)]
+        for i in range(len(new_strike)):
+            for shift in [-2, -1, 1, 2]:
+                res = self._x_y(new_strike[i][0], new_strike[i][1], x_dir, y_dir, shift)
+                if res is not None:
+                    area.append(res)
+        return area
+
+    def _x_y(self, x, y, x_dir, y_dir, shift):
+        x_ = x + shift * x_dir
+        y_ = y + shift * y_dir
+        if 0 <= x_ < self.board_size and 0 <= y_ < self.board_size \
+                and self.board[y_][x_] == Color.EMPTY:
+            return x_, y_
+        return None
 
     def __str__(self):
         res = ""

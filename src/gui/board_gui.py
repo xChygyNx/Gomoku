@@ -34,7 +34,6 @@ class BoardGui:
         self._moves.set(0)
         self._time_spend_label = None
         self._time_spend = time.perf_counter()
-        self._callback_id = None
         self._winner = None
         self._win_strike = []
 
@@ -127,10 +126,10 @@ class BoardGui:
         turn = ttk.Label(self._info_frame, textvariable=self._turn, font=LABEL_FONT, bg=BOARD_COLOR)
         turn.place(relx=.7, rely=.47, anchor="center")
 
-        time_l = ttk.Label(self._info_frame, text='Time:', font=font_u, bg=BOARD_COLOR)
+        time_l = ttk.Label(self._info_frame, text='Taken:', font=font_u, bg=BOARD_COLOR)
         time_l.place(relx=.1, rely=.61, anchor="w")
 
-        self._time_spend_label = ttk.Label(self._info_frame, text=self._time_spend, font=LABEL_FONT, bg=BOARD_COLOR)
+        self._time_spend_label = ttk.Label(self._info_frame, text="0.00", font=LABEL_FONT, bg=BOARD_COLOR)
         self._time_spend_label.place(relx=.7, rely=.61, anchor="center")
 
         catches_l = ttk.Label(self._info_frame, text='Catches:', font=font_u, bg=BOARD_COLOR)
@@ -151,15 +150,12 @@ class BoardGui:
 
         self._p1.place(rel_y=.85)
         self._p2.place(rel_y=.93)
-        self._show_move_time()
 
     def _show_move_time(self):
         showtime = f"{time.perf_counter() - self._time_spend:0.2f}"
         self._time_spend_label.config(text=showtime)
-        self._callback_id = self._time_spend_label.after(75, self._show_move_time)
 
     def _stop_move_time(self):
-        self._time_spend_label.after_cancel(self._callback_id)
         self._time_spend_label.config(text="0.00")
 
     def print_winner(self, strike, **kwargs):
@@ -199,7 +195,7 @@ class BoardGui:
         y = BoardGui.round_cell(event.y - self._padding, self._cell_width) + self._padding
 
         position = chr(ord('a') + round((x - self._padding) / self._cell_width)) + \
-            str(self._config.get_board_size() - round((y - self._padding) / self._cell_width))
+                   str(self._config.get_board_size() - round((y - self._padding) / self._cell_width))
 
         if self.if_pos_in_bound(x, y):
 
@@ -214,7 +210,9 @@ class BoardGui:
                     self._cur_player.catch(len(capture))
 
                 strike = self._board.get_win_strike(position)
-                if len(strike) != 0 or self._cur_player.catches() >= 10:
+                if (len(strike) != 0 and
+                    not self._board.check_win_strike_to_capture_by_pos(strike, self._cur_player.get_color())) \
+                        or self._cur_player.catches() >= 10:
                     self.print_winner(strike)
                 else:
                     self._send_method("make_turn", position, capture)
@@ -238,6 +236,7 @@ class BoardGui:
         else:
             self._cur_player = self._p1
         self._turn.set(self._cur_player.get_name())
+        self._show_move_time()
         self._time_spend = time.perf_counter()
         self._info_frame.update_idletasks()
 

@@ -401,6 +401,22 @@ class TestBoard:
         assert not board.is_forbidden_turn_pos("i17", WHITE)
         assert not board.is_forbidden_turn_pos("m17", BLACK)
 
+    def test_double_free_after_capture(self):
+        piecies = {"f14": BLACK, "g14": BLACK,
+                   "h14": WHITE, "h15": WHITE,
+                   "j14": WHITE, "j15": WHITE,
+                   "k14": BLACK, "l14": BLACK,
+                   "i14": BLACK,
+                   "h16": BLACK, "j16": BLACK}
+
+        board = get_board_with_piecies(piecies)
+
+        assert not board.is_forbidden_turn_pos("h13", BLACK)
+        assert not board.is_forbidden_turn_pos("j13", BLACK)
+
+        assert board.get_positions_of_captures("h13", BLACK) == ["h14", "h15"]
+        assert board.get_positions_of_captures("j13", BLACK) == ["j14", "j15"]
+
     def test_possible_horizontal_capture_left(self):
 
         piecies = {"a9": BLACK, "b9": WHITE, "d9": BLACK}

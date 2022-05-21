@@ -34,7 +34,7 @@ class Server:
         self._socket = None
         self.connection = None
         self.address = None
-        self.gomoku: Gomoku = None
+        self.gomoku: Gomoku =   None
 
     @property
     def socket(self):
